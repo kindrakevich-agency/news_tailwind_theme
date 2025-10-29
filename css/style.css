@@ -32,14 +32,14 @@
 
 /* Article Body Typography Styles */
 .article-body {
-    font-size: 1.125rem;
-    line-height: 1.75;
+    font-size: 1rem;
+    line-height: 1.7;
     color: #374151;
 }
 
 .article-body p {
     margin-bottom: 1.5rem;
-    line-height: 1.8;
+    line-height: 1.7;
 }
 
 .article-body h1,
@@ -156,7 +156,7 @@
 }
 
 .article-body img {
-    max-width: 100%;
+    width: 100%;
     height: auto;
     border-radius: 0.5rem;
     margin: 2rem 0;
@@ -268,11 +268,17 @@
 }
 
 .article-body iframe,
-.article-body video,
-.article-body audio {
-    max-width: 100%;
+.article-body video {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
     margin: 2rem 0;
     border-radius: 0.5rem;
+}
+
+.article-body audio {
+    width: 100%;
+    margin: 2rem 0;
 }
 
 /* Quote styling for articles */
@@ -286,7 +292,15 @@
 
 /* Special styling for first paragraph */
 .article-body > p:first-of-type {
-    font-size: 1.25rem;
-    line-height: 1.75;
+    font-size: 1.125rem;
+    line-height: 1.7;
     color: #1f2937;
+}
+
+/* Line clamp utility for teaser text */
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }

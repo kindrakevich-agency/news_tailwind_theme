@@ -41,10 +41,10 @@
             </h2>
         {% endif %}
 
-        {% if content.body|render %}
-            <div class="text-sm text-gray-600 mb-4">
-                {{ content.body }}
-            </div>
+        {% if body_plain %}
+            <p class="text-xs text-gray-600 mb-4 line-clamp-3">
+                {{ body_plain }}
+            </p>
         {% endif %}
 
         <div class="flex items-center text-sm text-gray-500">

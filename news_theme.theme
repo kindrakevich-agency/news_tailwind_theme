@@ -195,11 +195,26 @@ function news_theme_preprocess_node(&$variables) {
   $request = \Drupal::request();
   $variables['search_query'] = $request->query->get('keys') ?: '';
 
-  // Get prev/next articles based on tags and date (only for full view mode).
+  // Add plain text body for teaser view mode.
+  if ($variables['view_mode'] == 'teaser' && $node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body_value = $node->get('body')->value;
+    // Strip HTML tags and get plain text.
+    $plain_text = strip_tags($body_value);
+    // Truncate to 200 characters.
+    if (mb_strlen($plain_text) > 200) {
+      $plain_text = mb_substr($plain_text, 0, 200) . '...';
+    }
+    $variables['body_plain'] = $plain_text;
+  }
+
+  // Get prev/next articles and related articles (only for full view mode).
   if ($variables['view_mode'] == 'full' && $node->bundle() == 'article') {
     $prev_next = _news_theme_get_prev_next_articles($node);
     $variables['prev_article'] = $prev_next['prev'];
     $variables['next_article'] = $prev_next['next'];
+
+    // Get related articles based on tags.
+    $variables['related_articles'] = _news_theme_get_related_articles($node);
   }
 }
 
@@ -348,6 +363,53 @@ function _news_theme_get_prev_next_articles($current_node) {
   }
 
   return $result;
+}
+
+/**
+ * Helper function to get related articles based on tags (up to 10).
+ */
+function _news_theme_get_related_articles($current_node) {
+  $related_articles = [];
+
+  // Get tags from current article.
+  if (!$current_node->hasField('field_tags') || $current_node->get('field_tags')->isEmpty()) {
+    return $related_articles;
+  }
+
+  $tag_ids = [];
+  foreach ($current_node->get('field_tags') as $tag) {
+    $tag_ids[] = $tag->target_id;
+  }
+
+  if (empty($tag_ids)) {
+    return $related_articles;
+  }
+
+  $current_nid = $current_node->id();
+
+  // Query for related articles.
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->condition('nid', $current_nid, '!=')
+    ->condition('field_tags', $tag_ids, 'IN')
+    ->sort('created', 'DESC')
+    ->range(0, 10)
+    ->accessCheck(TRUE);
+
+  $nids = $query->execute();
+
+  if (!empty($nids)) {
+    $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+    foreach ($nids as $nid) {
+      $node = Node::load($nid);
+      if ($node) {
+        $related_articles[] = $view_builder->view($node, 'teaser');
+      }
+    }
+  }
+
+  return $related_articles;
 }
 
 /**
