@@ -10,6 +10,8 @@
 #}
 <div class="masonry">
     {% for row in rows %}
-        {{ row.content }}
+        <div class="masonry-item">
+            {{ row.content }}
+        </div>
     {% endfor %}
 </div>

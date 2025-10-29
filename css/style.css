@@ -30,6 +30,19 @@
     margin-bottom: 1.5rem;
 }
 
+/* Remove default list styles for masonry */
+.masonry.item-list,
+.masonry ul,
+.masonry ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.masonry li {
+    list-style: none;
+}
+
 /* Article Body Typography Styles */
 .article-body {
     font-size: 1rem;

@@ -201,11 +201,14 @@ display:
           expose:
             operator: ''
       style:
-        type: default
+        type: html_list
         options:
           grouping: {  }
-          row_class: ''
-          default_row_class: true
+          row_class: masonry-item
+          default_row_class: false
+          type: ul
+          wrapper_class: masonry
+          class: ''
       row:
         type: 'entity:node'
         options:
