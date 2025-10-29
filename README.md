@@ -29,19 +29,21 @@ A modern, responsive news website theme built with Tailwind CSS for Drupal 11.
    cp -r news_theme /path/to/drupal/themes/custom/
    ```
 
-2. Enable the theme (this will automatically install the required views):
-   ```
+2. Enable the theme (this will automatically install the required views and set the homepage):
+   ```bash
    drush theme:enable news_theme
    drush config:set system.theme default news_theme
    drush cr
    ```
 
-   Or via the admin interface: Appearance → Install and set as default
+   Or via the admin interface:
+   - Go to Appearance → Install and set as default
+   - Clear cache after installation
 
-**Note:** When the theme is installed, it automatically creates:
-- **Frontpage Articles View** - Displays latest articles on `/frontpage` (set as homepage)
-- **Taxonomy Term Articles View** - Displays filtered articles on `/taxonomy/term/%`
-- **Homepage Configuration** - Sets `/frontpage` as the default homepage
+**Note:** When the theme is installed, it automatically:
+- Creates **Frontpage Articles View** - Displays latest articles on `/frontpage`
+- Creates **Taxonomy Term Articles View** - Displays filtered articles on `/taxonomy/term/%`
+- Sets `/frontpage` as the default homepage (via install hook)
 
 ## Configuration
 
@@ -104,8 +106,7 @@ news_theme/
 ├── config/
 │   └── install/
 │       ├── views.view.frontpage_articles.yml      # Frontpage view config
-│       ├── views.view.taxonomy_term_articles.yml  # Taxonomy term view config
-│       └── system.site.yml                        # Homepage configuration
+│       └── views.view.taxonomy_term_articles.yml  # Taxonomy term view config
 ├── css/
 │   └── style.css                                  # Custom CSS styles
 ├── js/                                            # JavaScript files (if needed)
@@ -125,6 +126,7 @@ news_theme/
 │   ├── taxonomy-term--tags.html.twig             # Taxonomy term page
 │   └── views-view-unformatted.html.twig          # Views unformatted template
 ├── news_theme.info.yml                            # Theme info file
+├── news_theme.install                             # Install/uninstall hooks
 ├── news_theme.libraries.yml                       # Asset libraries
 ├── news_theme.theme                               # Theme functions
 └── README.md                                      # This file
