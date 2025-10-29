@@ -15,7 +15,8 @@
                 <a href="{{ path('<front>') }}" class="text-2xl font-bold text-gray-900">Polissya.today</a>
             </div>
             <div class="flex items-center">
-                <div class="relative">
+                <!-- Desktop Search -->
+                <div class="relative hidden md:block">
                     <form action="{{ base_path }}search/node" method="get" accept-charset="UTF-8">
                         <input type="text" name="keys" value="{{ search_query|default('') }}" placeholder="Search..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
                         <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,7 +24,66 @@
                         </svg>
                     </form>
                 </div>
+
+                <!-- Mobile Search Icon -->
+                <button id="mobile-search-toggle" class="md:hidden p-2 text-gray-600 hover:text-gray-900 focus:outline-none" aria-label="Search">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Search Overlay -->
+    <div id="mobile-search-overlay" class="hidden md:hidden absolute top-0 left-0 right-0 bg-white border-b border-gray-200 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center h-16">
+                <form action="{{ base_path }}search/node" method="get" accept-charset="UTF-8" class="flex-1 flex items-center">
+                    <div class="relative flex-1">
+                        <input type="text" name="keys" value="{{ search_query|default('') }}" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <button type="button" id="mobile-search-close" class="ml-3 p-2 text-gray-600 hover:text-gray-900" aria-label="Close search">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 </header>
+
+<script>
+(function() {
+    const toggleBtn = document.getElementById('mobile-search-toggle');
+    const closeBtn = document.getElementById('mobile-search-close');
+    const overlay = document.getElementById('mobile-search-overlay');
+    const searchInput = overlay ? overlay.querySelector('input[name="keys"]') : null;
+
+    if (toggleBtn && overlay) {
+        toggleBtn.addEventListener('click', function() {
+            overlay.classList.remove('hidden');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        });
+    }
+
+    if (closeBtn && overlay) {
+        closeBtn.addEventListener('click', function() {
+            overlay.classList.add('hidden');
+        });
+    }
+
+    // Close on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay && !overlay.classList.contains('hidden')) {
+            overlay.classList.add('hidden');
+        }
+    });
+})();
+</script>
