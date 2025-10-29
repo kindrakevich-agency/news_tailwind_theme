@@ -11,6 +11,8 @@ A modern, responsive news website theme built with Tailwind CSS for Drupal 11.
 - Optimized for article content type
 - Separate includes for header, navigation, and footer
 - Pagination support
+- **Pre-configured Views** - Automatically installed with the theme
+- **Auto-configured homepage** - Ready to use immediately
 
 ## Requirements
 
@@ -27,13 +29,19 @@ A modern, responsive news website theme built with Tailwind CSS for Drupal 11.
    cp -r news_theme /path/to/drupal/themes/custom/
    ```
 
-2. Enable the theme:
+2. Enable the theme (this will automatically install the required views):
    ```
    drush theme:enable news_theme
    drush config:set system.theme default news_theme
+   drush cr
    ```
 
    Or via the admin interface: Appearance → Install and set as default
+
+**Note:** When the theme is installed, it automatically creates:
+- **Frontpage Articles View** - Displays latest articles on `/frontpage` (set as homepage)
+- **Taxonomy Term Articles View** - Displays filtered articles on `/taxonomy/term/%`
+- **Homepage Configuration** - Sets `/frontpage` as the default homepage
 
 ## Configuration
 
@@ -55,30 +63,28 @@ Ensure your Article content type has these fields:
 
 Create a taxonomy vocabulary called "tags" (machine name: `tags`) and add terms for your categories (e.g., Politics, Business, Technology, Health, etc.)
 
-### 3. Views Configuration
+### 3. Automatic Views (No Manual Configuration Needed!)
 
-#### Frontpage View
-Create a view for the homepage:
+The theme automatically installs two pre-configured views when enabled:
 
-- **Display**: Page
-- **Path**: `/`
-- **Format**: Unformatted list
-- **Show**: Content (Article nodes)
-- **View mode**: Teaser
-- **Sort**: Post date (descending)
-- **Pager**: Full pager, 12 items per page
+#### Frontpage Articles View
+- **Path**: `/frontpage` (automatically set as homepage)
+- **Format**: Unformatted list with masonry layout
+- **Display**: Article nodes in teaser mode
+- **Sort**: Post date (newest first)
+- **Pager**: 12 items per page
+- **Access**: All users with 'access content' permission
 
-#### Taxonomy Term View
-Create a view for taxonomy term pages:
+#### Taxonomy Term Articles View
+- **Path**: `/taxonomy/term/%` (overrides default taxonomy pages)
+- **Format**: Unformatted list with masonry layout
+- **Display**: Article nodes filtered by tag in teaser mode
+- **Sort**: Post date (newest first)
+- **Pager**: 12 items per page
+- **Contextual Filter**: Taxonomy term ID from URL
+- **Validation**: Only accepts terms from 'tags' vocabulary
 
-- **Display**: Page
-- **Path**: `/taxonomy/term/%`
-- **Format**: Unformatted list
-- **Show**: Content (Article nodes)
-- **View mode**: Teaser
-- **Sort**: Post date (descending)
-- **Filter**: Taxonomy term ID from URL
-- **Pager**: Full pager, 12 items per page
+**These views are pre-configured and ready to use!** No manual view creation needed.
 
 ### 4. Display Modes
 
@@ -95,28 +101,33 @@ Navigate to: Structure → Content types → Article → Manage display → Teas
 
 ```
 news_theme/
+├── config/
+│   └── install/
+│       ├── views.view.frontpage_articles.yml      # Frontpage view config
+│       ├── views.view.taxonomy_term_articles.yml  # Taxonomy term view config
+│       └── system.site.yml                        # Homepage configuration
 ├── css/
-│   └── style.css                          # Custom CSS styles
-├── js/                                    # JavaScript files (if needed)
+│   └── style.css                                  # Custom CSS styles
+├── js/                                            # JavaScript files (if needed)
 ├── templates/
 │   ├── includes/
-│   │   ├── header-menu.html.twig         # Header with logo and search
-│   │   ├── header-tags.html.twig         # Taxonomy navigation
-│   │   └── footer.html.twig              # Footer with social links
-│   ├── field--body.html.twig             # Body field template
-│   ├── field--field-image.html.twig      # Image field template
-│   ├── field--field-tags.html.twig       # Tags field template
-│   ├── node--article.html.twig           # Full article page
-│   ├── node--article--teaser.html.twig   # Article teaser (listing)
-│   ├── page--front.html.twig             # Front page template
-│   ├── page.html.twig                    # Default page template
-│   ├── pager.html.twig                   # Pagination template
-│   ├── taxonomy-term--tags.html.twig     # Taxonomy term page
-│   └── views-view-unformatted.html.twig  # Views unformatted template
-├── news_theme.info.yml                    # Theme info file
-├── news_theme.libraries.yml               # Asset libraries
-├── news_theme.theme                       # Theme functions
-└── README.md                              # This file
+│   │   ├── header-menu.html.twig                 # Header with logo and search
+│   │   ├── header-tags.html.twig                 # Taxonomy navigation
+│   │   └── footer.html.twig                      # Footer with social links
+│   ├── field--body.html.twig                     # Body field template
+│   ├── field--field-image.html.twig              # Image field template
+│   ├── field--field-tags.html.twig               # Tags field template
+│   ├── node--article.html.twig                   # Full article page
+│   ├── node--article--teaser.html.twig           # Article teaser (listing)
+│   ├── page--front.html.twig                     # Front page template
+│   ├── page.html.twig                            # Default page template
+│   ├── pager.html.twig                           # Pagination template
+│   ├── taxonomy-term--tags.html.twig             # Taxonomy term page
+│   └── views-view-unformatted.html.twig          # Views unformatted template
+├── news_theme.info.yml                            # Theme info file
+├── news_theme.libraries.yml                       # Asset libraries
+├── news_theme.theme                               # Theme functions
+└── README.md                                      # This file
 ```
 
 ## Customization
