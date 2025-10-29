@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Theme implementation for the tags field.
+ *
+ * Available variables:
+ * - items: List of all the field items
+ * - element: The field element
+ */
+#}
+{% if items %}
+    {% for item in items %}
+        <a href="{{ item.content['#url'] }}"
+           class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded hover:bg-purple-200 transition-colors inline-block">
+            {{ item.content['#title']|upper }}
+        </a>
+    {% endfor %}
+{% endif %}

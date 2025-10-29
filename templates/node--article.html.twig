@@ -1,0 +1,97 @@
+{#
+/**
+ * @file
+ * Theme implementation to display an article node.
+ *
+ * Available variables:
+ * - node: The node entity
+ * - content: Node content render array
+ * - label: The title of the node
+ * - url: Direct URL to node
+ * - date: Formatted creation date
+ * - author_name: Author's name
+ * - field_tags: Tags field
+ * - field_image: Image field
+ * - body: Body field
+ */
+#}
+<article{{ attributes.addClass('max-w-3xl', 'mx-auto', 'px-4', 'sm:px-6', 'lg:px-8', 'py-12') }}>
+    <!-- Article Header -->
+    <header class="mb-8">
+        {% if label %}
+            <h1 class="text-4xl font-bold text-gray-900 text-center mb-6">
+                {{ label }}
+            </h1>
+        {% endif %}
+
+        {% if content.field_tags %}
+            <div class="flex justify-center space-x-4 mb-8">
+                {{ content.field_tags }}
+            </div>
+        {% endif %}
+    </header>
+
+    <!-- Featured Image -->
+    {% if content.field_image %}
+        <div class="mb-8 rounded-2xl overflow-hidden">
+            {{ content.field_image }}
+        </div>
+    {% endif %}
+
+    <!-- Author and Meta Info -->
+    <div class="flex items-center justify-between mb-8 pb-6 border-b border-gray-200">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-gray-300 rounded-full overflow-hidden">
+                {% if author_picture %}
+                    {{ author_picture }}
+                {% else %}
+                    <svg class="w-full h-full text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                {% endif %}
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-gray-900">{{ author_name }}</div>
+                <div class="text-xs text-gray-500">{{ date }}</div>
+            </div>
+        </div>
+        {% if reading_time %}
+            <div class="flex items-center text-sm text-gray-500">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{{ reading_time }} Minute</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Article Body -->
+    {% if content.body %}
+        <div class="prose prose-lg max-w-none">
+            {{ content.body }}
+        </div>
+    {% endif %}
+
+    <!-- Navigation Buttons -->
+    <div class="flex items-center justify-center space-x-4 mt-12 pt-8 border-t border-gray-200">
+        {% if node.previous %}
+            <a href="{{ node.previous.url }}" class="px-6 py-2 text-sm text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
+                Previous
+            </a>
+        {% else %}
+            <button class="px-6 py-2 text-sm text-gray-400 border border-gray-200 rounded-full cursor-not-allowed" disabled>
+                Previous
+            </button>
+        {% endif %}
+
+        {% if node.next %}
+            <a href="{{ node.next.url }}" class="px-6 py-2 text-sm text-white bg-teal-600 rounded-full hover:bg-teal-700 transition-colors">
+                Next
+            </a>
+        {% else %}
+            <button class="px-6 py-2 text-sm text-gray-400 border border-gray-200 rounded-full cursor-not-allowed" disabled>
+                Next
+            </button>
+        {% endif %}
+    </div>
+</article>

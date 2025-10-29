@@ -1,0 +1,56 @@
+{#
+/**
+ * @file
+ * Theme implementation for article node teaser view mode (for listing pages).
+ *
+ * Available variables:
+ * - node: The node entity
+ * - content: Node content render array
+ * - label: The title of the node
+ * - url: Direct URL to node
+ */
+#}
+{%
+  set classes = [
+    'masonry-item',
+    'bg-white',
+    'rounded-lg',
+    'overflow-hidden',
+    'shadow-sm',
+    'hover:shadow-md',
+    'transition-shadow',
+  ]
+%}
+<article{{ attributes.addClass(classes) }}>
+    {% if content.field_image|render %}
+        <a href="{{ url }}">
+            {{ content.field_image }}
+        </a>
+    {% endif %}
+
+    <div class="p-6">
+        {% if content.field_tags|render %}
+            <div class="flex space-x-2 mb-3">
+                {{ content.field_tags }}
+            </div>
+        {% endif %}
+
+        {% if label %}
+            <h2 class="text-xl font-bold text-gray-900 mb-3">
+                <a href="{{ url }}" class="hover:text-gray-700">{{ label }}</a>
+            </h2>
+        {% endif %}
+
+        {% if content.body|render %}
+            <div class="text-sm text-gray-600 mb-4">
+                {{ content.body }}
+            </div>
+        {% endif %}
+
+        <div class="flex items-center text-sm text-gray-500">
+            <span class="mr-2">😊</span>
+            <span class="font-semibold mr-2">{{ node.comment_count|default('0') }}</span>
+            <span>{{ node.view_count|default('0') }} views · {{ date }}</span>
+        </div>
+    </div>
+</article>

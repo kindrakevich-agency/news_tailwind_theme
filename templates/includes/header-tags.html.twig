@@ -1,0 +1,42 @@
+{#
+/**
+ * @file
+ * Theme implementation for the header tags navigation.
+ *
+ * Available variables:
+ * - tags: Array of taxonomy terms from the tags vocabulary
+ * - current_term: Current taxonomy term object (if on a taxonomy term page)
+ */
+#}
+<!-- Navigation Tags -->
+<nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center h-12 overflow-x-auto scrollbar-hide">
+            <div class="flex items-center space-x-6 whitespace-nowrap">
+                {% if tags %}
+                    {% for tag in tags %}
+                        {% set is_active = current_term and current_term.id == tag.id %}
+                        <a href="{{ path('entity.taxonomy_term.canonical', {'taxonomy_term': tag.id}) }}"
+                           class="text-sm {{ is_active ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900' }}">
+                            # {{ tag.name }}
+                        </a>
+                    {% endfor %}
+                {% else %}
+                    {# Fallback static tags if no taxonomy terms are loaded #}
+                    <a href="#" class="text-sm font-semibold text-gray-900"># Popular</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Favorite</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Politics</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Videos</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Trend</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Business</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Science</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Sport</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># IT</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Technology</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Entertainment</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Health</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

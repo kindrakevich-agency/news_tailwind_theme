@@ -1,0 +1,128 @@
+<?php
+
+/**
+ * @file
+ * Functions to support theming in the News theme.
+ */
+
+use Drupal\taxonomy\Entity\Term;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_preprocess_HOOK() for page templates.
+ */
+function news_theme_preprocess_page(&$variables) {
+  // Load tags from taxonomy vocabulary for header navigation.
+  $variables['tags'] = _news_theme_load_tags();
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for taxonomy term templates.
+ */
+function news_theme_preprocess_taxonomy_term(&$variables) {
+  // Load tags from taxonomy vocabulary for header navigation.
+  $variables['tags'] = _news_theme_load_tags();
+
+  // Pass current term to template.
+  $variables['term'] = $variables['term'];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for node templates.
+ */
+function news_theme_preprocess_node(&$variables) {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $variables['node'];
+
+  // Add author name.
+  $variables['author_name'] = $node->getOwner()->getDisplayName();
+
+  // Add formatted date.
+  $variables['date'] = \Drupal::service('date.formatter')->format(
+    $node->getCreatedTime(),
+    'custom',
+    'j F Y'
+  );
+
+  // Calculate reading time based on body field.
+  if ($node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body = $node->get('body')->value;
+    $word_count = str_word_count(strip_tags($body));
+    $reading_time = ceil($word_count / 200); // Assuming 200 words per minute.
+    $variables['reading_time'] = $reading_time;
+  }
+
+  // Load tags for header navigation.
+  $variables['tags'] = _news_theme_load_tags();
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for field templates.
+ */
+function news_theme_preprocess_field(&$variables) {
+  $element = $variables['element'];
+
+  // Format tags field as links.
+  if ($element['#field_name'] == 'field_tags') {
+    foreach ($variables['items'] as $delta => $item) {
+      if (isset($item['content']['#plain_text'])) {
+        $tid = $element['#items'][$delta]->target_id;
+        $term = Term::load($tid);
+        if ($term) {
+          $variables['items'][$delta]['content']['#url'] = Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $tid]);
+          $variables['items'][$delta]['content']['#title'] = $term->getName();
+        }
+      }
+    }
+  }
+
+  // For image field, only show first image.
+  if ($element['#field_name'] == 'field_image' && $element['#view_mode'] == 'teaser') {
+    // Keep only the first item.
+    if (count($variables['items']) > 1) {
+      $variables['items'] = array_slice($variables['items'], 0, 1);
+    }
+  }
+}
+
+/**
+ * Helper function to load tags from taxonomy vocabulary.
+ */
+function _news_theme_load_tags() {
+  $tags = [];
+
+  // Load all terms from the 'tags' vocabulary.
+  $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+  $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
+
+  foreach ($terms as $term) {
+    $tags[] = [
+      'id' => $term->id(),
+      'name' => $term->getName(),
+    ];
+  }
+
+  return $tags;
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter() for page templates.
+ */
+function news_theme_theme_suggestions_page_alter(array &$suggestions, array $variables) {
+  // Add page--front suggestion for front page.
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $suggestions[] = 'page__front';
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter() for taxonomy term templates.
+ */
+function news_theme_theme_suggestions_taxonomy_term_alter(array &$suggestions, array $variables) {
+  /** @var \Drupal\taxonomy\TermInterface $term */
+  $term = $variables['elements']['#taxonomy_term'];
+  $vocabulary_id = $term->bundle();
+
+  // Add taxonomy-term--tags suggestion for tags vocabulary.
+  $suggestions[] = 'taxonomy_term__' . $vocabulary_id;
+}

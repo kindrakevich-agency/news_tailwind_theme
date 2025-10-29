@@ -1,0 +1,7 @@
+global:
+  version: 1.0
+  css:
+    theme:
+      css/style.css: {}
+  js:
+    https://cdn.tailwindcss.com: { type: external, minified: true }

@@ -1,0 +1,20 @@
+name: News Theme
+type: theme
+description: 'A modern news website theme with Tailwind CSS'
+core_version_requirement: ^10 || ^11
+base theme: false
+
+regions:
+  header: Header
+  header_tags: 'Header Tags'
+  content: Content
+  footer: Footer
+
+libraries:
+  - news_theme/global
+
+libraries-override:
+  system/base:
+    css:
+      component:
+        css/components/ajax-progress.module.css: false
