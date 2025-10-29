@@ -1,13 +1,11 @@
 {#
 /**
  * @file
- * Theme implementation to display a taxonomy term (tags vocabulary).
+ * Theme implementation for search results page.
  *
  * Available variables:
- * - term: The taxonomy term entity
- * - name: The term name
- * - content: Term content render array
  * - page: Page content render array
+ * - logged_in: TRUE if the user is logged in
  */
 #}
 <!DOCTYPE html>
@@ -25,7 +23,7 @@
     {{ page_top }}
 
     {% include '@news_theme/includes/header-menu.html.twig' %}
-    {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': term} %}
+    {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': null} %}
 
     <!-- Filter Buttons - Main Menu -->
     {% if main_menu_items %}

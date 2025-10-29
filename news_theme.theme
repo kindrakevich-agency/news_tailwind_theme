@@ -5,8 +5,82 @@
  * Functions to support theming in the News theme.
  */
 
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Url;
+use Drupal\node\Entity\Node;
+
+/**
+ * Implements hook_form_system_theme_settings_alter().
+ */
+function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface $form_state) {
+  $form['footer_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Footer Settings'),
+    '#open' => TRUE,
+  ];
+
+  $form['footer_settings']['footer_site_name'] = [
+    '#type' => 'textfield',
+    '#title' => t('Footer Site Name'),
+    '#default_value' => theme_get_setting('footer_site_name') ?: 'Polissya.today',
+  ];
+
+  $form['footer_settings']['footer_description'] = [
+    '#type' => 'textarea',
+    '#title' => t('Footer Description'),
+    '#default_value' => theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.',
+    '#rows' => 3,
+  ];
+
+  $form['footer_settings']['footer_email'] = [
+    '#type' => 'email',
+    '#title' => t('Footer Email'),
+    '#default_value' => theme_get_setting('footer_email') ?: 'contact@polissya.today',
+  ];
+
+  $form['footer_settings']['social_links'] = [
+    '#type' => 'details',
+    '#title' => t('Social Media Links'),
+    '#open' => FALSE,
+  ];
+
+  $form['footer_settings']['social_links']['footer_facebook'] = [
+    '#type' => 'url',
+    '#title' => t('Facebook URL'),
+    '#default_value' => theme_get_setting('footer_facebook') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_twitter'] = [
+    '#type' => 'url',
+    '#title' => t('Twitter URL'),
+    '#default_value' => theme_get_setting('footer_twitter') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_instagram'] = [
+    '#type' => 'url',
+    '#title' => t('Instagram URL'),
+    '#default_value' => theme_get_setting('footer_instagram') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_youtube'] = [
+    '#type' => 'url',
+    '#title' => t('YouTube URL'),
+    '#default_value' => theme_get_setting('footer_youtube') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_github'] = [
+    '#type' => 'url',
+    '#title' => t('GitHub URL'),
+    '#default_value' => theme_get_setting('footer_github') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_medium'] = [
+    '#type' => 'url',
+    '#title' => t('Medium URL'),
+    '#default_value' => theme_get_setting('footer_medium') ?: '',
+  ];
+}
 
 /**
  * Implements hook_preprocess_HOOK() for page templates.
@@ -14,6 +88,33 @@ use Drupal\Core\Url;
 function news_theme_preprocess_page(&$variables) {
   // Load tags from taxonomy vocabulary for header navigation.
   $variables['tags'] = _news_theme_load_tags();
+
+  // Load footer settings.
+  $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
+  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
+  $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
+  $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
+  $variables['footer_instagram'] = theme_get_setting('footer_instagram') ?: '';
+  $variables['footer_youtube'] = theme_get_setting('footer_youtube') ?: '';
+  $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
+  $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
+
+  // Load main menu for footer.
+  $menu_tree = \Drupal::menuTree();
+  $menu_name = 'main';
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  $parameters->setMaxDepth(1);
+  $tree = $menu_tree->load($menu_name, $parameters);
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+  ];
+  $tree = $menu_tree->transform($tree, $manipulators);
+  $variables['footer_menu'] = $menu_tree->build($tree);
+
+  // Load main menu items for filter buttons.
+  $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 }
 
 /**
@@ -25,6 +126,33 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
 
   // Pass current term to template.
   $variables['term'] = $variables['term'];
+
+  // Load footer settings.
+  $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
+  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
+  $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
+  $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
+  $variables['footer_instagram'] = theme_get_setting('footer_instagram') ?: '';
+  $variables['footer_youtube'] = theme_get_setting('footer_youtube') ?: '';
+  $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
+  $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
+
+  // Load main menu for footer.
+  $menu_tree = \Drupal::menuTree();
+  $menu_name = 'main';
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  $parameters->setMaxDepth(1);
+  $tree = $menu_tree->load($menu_name, $parameters);
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+  ];
+  $tree = $menu_tree->transform($tree, $manipulators);
+  $variables['footer_menu'] = $menu_tree->build($tree);
+
+  // Load main menu items for filter buttons.
+  $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 }
 
 /**
@@ -54,6 +182,13 @@ function news_theme_preprocess_node(&$variables) {
 
   // Load tags for header navigation.
   $variables['tags'] = _news_theme_load_tags();
+
+  // Get prev/next articles based on tags and date (only for full view mode).
+  if ($variables['view_mode'] == 'full' && $node->bundle() == 'article') {
+    $prev_next = _news_theme_get_prev_next_articles($node);
+    $variables['prev_article'] = $prev_next['prev'];
+    $variables['next_article'] = $prev_next['next'];
+  }
 }
 
 /**
@@ -106,12 +241,116 @@ function _news_theme_load_tags() {
 }
 
 /**
+ * Helper function to get main menu items.
+ */
+function _news_theme_get_main_menu_items() {
+  $menu_tree = \Drupal::menuTree();
+  $menu_name = 'main';
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  $parameters->setMaxDepth(1);
+  $tree = $menu_tree->load($menu_name, $parameters);
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+  ];
+  $tree = $menu_tree->transform($tree, $manipulators);
+
+  $menu_items = [];
+  foreach ($tree as $element) {
+    $menu_items[] = [
+      'title' => $element->link->getTitle(),
+      'url' => $element->link->getUrlObject(),
+    ];
+  }
+
+  return $menu_items;
+}
+
+/**
+ * Helper function to get previous and next articles based on tags and date.
+ */
+function _news_theme_get_prev_next_articles($current_node) {
+  $result = ['prev' => NULL, 'next' => NULL];
+
+  // Get tags from current article.
+  if (!$current_node->hasField('field_tags') || $current_node->get('field_tags')->isEmpty()) {
+    return $result;
+  }
+
+  $tag_ids = [];
+  foreach ($current_node->get('field_tags') as $tag) {
+    $tag_ids[] = $tag->target_id;
+  }
+
+  if (empty($tag_ids)) {
+    return $result;
+  }
+
+  $current_created = $current_node->getCreatedTime();
+  $current_nid = $current_node->id();
+
+  // Query for previous article (older).
+  $query_prev = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->condition('nid', $current_nid, '!=')
+    ->condition('field_tags', $tag_ids, 'IN')
+    ->condition('created', $current_created, '<')
+    ->sort('created', 'DESC')
+    ->range(0, 1)
+    ->accessCheck(TRUE);
+
+  $nids_prev = $query_prev->execute();
+  if (!empty($nids_prev)) {
+    $prev_nid = reset($nids_prev);
+    $prev_node = Node::load($prev_nid);
+    if ($prev_node) {
+      $result['prev'] = [
+        'url' => $prev_node->toUrl()->toString(),
+        'title' => $prev_node->getTitle(),
+      ];
+    }
+  }
+
+  // Query for next article (newer).
+  $query_next = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->condition('nid', $current_nid, '!=')
+    ->condition('field_tags', $tag_ids, 'IN')
+    ->condition('created', $current_created, '>')
+    ->sort('created', 'ASC')
+    ->range(0, 1)
+    ->accessCheck(TRUE);
+
+  $nids_next = $query_next->execute();
+  if (!empty($nids_next)) {
+    $next_nid = reset($nids_next);
+    $next_node = Node::load($next_nid);
+    if ($next_node) {
+      $result['next'] = [
+        'url' => $next_node->toUrl()->toString(),
+        'title' => $next_node->getTitle(),
+      ];
+    }
+  }
+
+  return $result;
+}
+
+/**
  * Implements hook_theme_suggestions_HOOK_alter() for page templates.
  */
 function news_theme_theme_suggestions_page_alter(array &$suggestions, array $variables) {
   // Add page--front suggestion for front page.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
     $suggestions[] = 'page__front';
+  }
+
+  // Add page--search suggestion for search pages.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name == 'search.view' || $route_name == 'search.view_node_search') {
+    $suggestions[] = 'page__search';
   }
 }
 

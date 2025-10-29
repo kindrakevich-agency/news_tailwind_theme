@@ -25,14 +25,18 @@
     {% include '@news_theme/includes/header-menu.html.twig' %}
     {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': null} %}
 
-    <!-- Filter Buttons -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-        <div class="flex space-x-2">
-            <button class="px-4 py-2 bg-gray-900 text-white text-sm rounded-full hover:bg-gray-800">+ add collection</button>
-            <button class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50">news</button>
-            <button class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50">all</button>
+    <!-- Filter Buttons - Main Menu -->
+    {% if main_menu_items %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
+                {% for item in main_menu_items %}
+                    <a href="{{ item.url }}" class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
+                        {{ item.title }}
+                    </a>
+                {% endfor %}
+            </div>
         </div>
-    </div>
+    {% endif %}
 
     <!-- Main Content Grid -->
     <div id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
