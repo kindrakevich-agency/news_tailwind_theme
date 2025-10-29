@@ -89,6 +89,10 @@ function news_theme_preprocess_page(&$variables) {
   // Load tags from taxonomy vocabulary for header navigation.
   $variables['tags'] = _news_theme_load_tags();
 
+  // Get search query from request for search field.
+  $request = \Drupal::request();
+  $variables['search_query'] = $request->query->get('keys') ?: '';
+
   // Load footer settings.
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
   $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
@@ -126,6 +130,10 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
 
   // Pass current term to template.
   $variables['term'] = $variables['term'];
+
+  // Get search query from request for search field.
+  $request = \Drupal::request();
+  $variables['search_query'] = $request->query->get('keys') ?: '';
 
   // Load footer settings.
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
@@ -182,6 +190,10 @@ function news_theme_preprocess_node(&$variables) {
 
   // Load tags for header navigation.
   $variables['tags'] = _news_theme_load_tags();
+
+  // Get search query from request for search field.
+  $request = \Drupal::request();
+  $variables['search_query'] = $request->query->get('keys') ?: '';
 
   // Get prev/next articles based on tags and date (only for full view mode).
   if ($variables['view_mode'] == 'full' && $node->bundle() == 'article') {
