@@ -93,6 +93,16 @@ function news_theme_preprocess_page(&$variables) {
   $request = \Drupal::request();
   $variables['search_query'] = $request->query->get('keys') ?: '';
 
+  // Check if we're on a taxonomy term page and pass the current term.
+  $route_match = \Drupal::routeMatch();
+  $variables['current_term'] = NULL;
+  if ($route_match->getRouteName() == 'entity.taxonomy_term.canonical') {
+    $term = $route_match->getParameter('taxonomy_term');
+    if ($term) {
+      $variables['current_term'] = $term;
+    }
+  }
+
   // Load footer settings.
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
   $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
@@ -410,6 +420,45 @@ function _news_theme_get_related_articles($current_node) {
   }
 
   return $related_articles;
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for search result templates.
+ */
+function news_theme_preprocess_search_result(&$variables) {
+  // Get the node from the result if it's a node search result.
+  if (isset($variables['result']['node'])) {
+    $node = $variables['result']['node'];
+
+    // Add the image if available.
+    if ($node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
+      $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+      $image_render = $view_builder->viewField($node->get('field_image'), [
+        'label' => 'hidden',
+        'type' => 'image',
+        'settings' => [
+          'image_style' => '',
+          'image_link' => '',
+        ],
+      ]);
+      // Only show first image.
+      if (isset($image_render[0])) {
+        $variables['image'] = $image_render[0];
+      }
+    }
+
+    // Add tags if available.
+    if ($node->hasField('field_tags') && !$node->get('field_tags')->isEmpty()) {
+      $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+      $variables['tags'] = $view_builder->viewField($node->get('field_tags'), [
+        'label' => 'hidden',
+        'type' => 'entity_reference_label',
+        'settings' => [
+          'link' => TRUE,
+        ],
+      ]);
+    }
+  }
 }
 
 /**
