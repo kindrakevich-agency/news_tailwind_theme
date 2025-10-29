@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News Website</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hide scrollbar but keep functionality */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Masonry layout */
+        .masonry {
+            column-count: 3;
+            column-gap: 1.5rem;
+        }
+        
+        @media (max-width: 1024px) {
+            .masonry {
+                column-count: 2;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .masonry {
+                column-count: 1;
+            }
+        }
+        
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Sticky Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">NewsHub</h1>
+                </div>
+                <div class="flex items-center">
+                    <div class="relative">
+                        <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-64">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tags -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center h-12 overflow-x-auto scrollbar-hide">
+                <div class="flex items-center space-x-6 whitespace-nowrap">
+                    <a href="#" class="text-sm font-semibold text-gray-900"># Popular</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Favorite</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Politics</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Videos</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Trend</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Videos</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Business</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Science</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Sport</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># IT</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Technology</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Entertainment</a>
+                    <a href="#" class="text-sm text-gray-500 hover:text-gray-900"># Health</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Filter Buttons -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="flex space-x-2">
+            <button class="px-4 py-2 bg-gray-900 text-white text-sm rounded-full hover:bg-gray-800">+ add collection</button>
+            <button class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50">news</button>
+            <button class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50">all</button>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        <div class="masonry">
+            
+            <!-- Article 1 - Dalai Lama -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/dalai/400/300" alt="Dalai Lama" class="w-full h-64 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full"></div>
+                            <div>
+                                <div class="text-sm font-semibold">Label news</div>
+                                <div class="text-xs text-gray-500">TEAM</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">BUSINESS</span>
+                        <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">POLITICS</span>
+                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">WORLD</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Dalai Lama: Seven billion people 'need a sense of oneness'</h2>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">5.4</span>
+                        <span>125k views · 4 months ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 2 - Contextual Emotion Detection -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/user1/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div>
+                                <div class="text-sm font-semibold">sismetanin</div>
+                                <div class="text-xs text-gray-500">PRO</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">BUSINESS</span>
+                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">WORLD</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Contextual Emotion Detection in Textual Conversations Using Neural Networks</h2>
+                    <p class="text-sm text-gray-600 mb-4">Nowadays, talking to conversational agents is becoming a daily routine, and it is crucial for dialogue systems to generate responses as human-like as possible. As one of the main aspects, primary attention should be given to providing emotionally aware...</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">7.2</span>
+                        <span>11k views · 6 months ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 3 - Juneteenth -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/juneteenth/400/300" alt="Juneteenth" class="w-full h-64 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/cheryl/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">Cheryl Brown</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">WORLD</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">What Every American Should Know About Juneteenth</h2>
+                    <p class="text-sm text-gray-600 mb-4">The day represents the end of slavery and the beginning of freedom for African Americans</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">5.4</span>
+                        <span>11k views · 15 days ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 4 - Internet Segments Report -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/eunice/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">Eunice Cortez</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">SCIENCE</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">2019 National Internet Segments Reliability Research & Report</h2>
+                    <p class="text-sm text-gray-600 mb-4">This report explains how the outage of a single AS can affect the connectivity of the impacted region with the rest of the world, especially when it is the dominant ISP on the market. Internet</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">5.4</span>
+                        <span>11k views · 12 days ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 5 - Climate Change -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/climate/400/250" alt="Climate" class="w-full h-48 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/james/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">James Wilson</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">SCIENCE</span>
+                        <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">ENVIRONMENT</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">New Climate Report Highlights Urgent Need for Action</h2>
+                    <p class="text-sm text-gray-600 mb-4">Scientists warn that immediate action is needed to combat rising global temperatures and their devastating effects on ecosystems worldwide.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">8.1</span>
+                        <span>89k views · 2 days ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 6 - Tech Innovation -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/sarah/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div>
+                                <div class="text-sm font-semibold">Sarah Chen</div>
+                                <div class="text-xs text-gray-500">PRO</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">TECHNOLOGY</span>
+                        <span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">IT</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Quantum Computing Breakthrough Promises Revolutionary Changes</h2>
+                    <p class="text-sm text-gray-600 mb-4">Researchers have achieved a significant milestone in quantum computing that could transform industries from healthcare to finance within the next decade.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">9.2</span>
+                        <span>203k views · 1 week ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 7 - Sports -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/sports/400/350" alt="Sports" class="w-full h-72 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/mike/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">Mike Torres</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded">SPORT</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Underdog Team Stuns Champions in Historic Upset</h2>
+                    <p class="text-sm text-gray-600 mb-4">In what's being called one of the greatest upsets in sports history, the underdog team defeated the reigning champions in a thrilling match.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">🔥</span>
+                        <span class="font-semibold mr-2">9.8</span>
+                        <span>456k views · 3 hours ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 8 - Health -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/emily/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div>
+                                <div class="text-sm font-semibold">Dr. Emily Roberts</div>
+                                <div class="text-xs text-gray-500">VERIFIED</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">HEALTH</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Study Reveals New Benefits of Mediterranean Diet</h2>
+                    <p class="text-sm text-gray-600 mb-4">A comprehensive 10-year study shows that following a Mediterranean diet can reduce the risk of heart disease by up to 40% while improving overall longevity.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">7.9</span>
+                        <span>167k views · 5 days ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 9 - Business -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/business/400/280" alt="Business" class="w-full h-56 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/david/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">David Martinez</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-indigo-100 text-indigo-800 rounded">BUSINESS</span>
+                        <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">FINANCE</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Tech Startup Valued at $1 Billion After Latest Funding Round</h2>
+                    <p class="text-sm text-gray-600 mb-4">The AI-powered company has reached unicorn status following a successful Series C funding round led by major venture capital firms.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">6.7</span>
+                        <span>92k views · 1 day ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 10 - Entertainment -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/entertainment/400/320" alt="Entertainment" class="w-full h-64 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/lisa/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">Lisa Anderson</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-pink-100 text-pink-800 rounded">ENTERTAINMENT</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Award-Winning Film Director Announces New Project</h2>
+                    <p class="text-sm text-gray-600 mb-4">The acclaimed director behind several blockbuster hits has revealed plans for an ambitious new film set to begin production next year.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">🎬</span>
+                        <span class="font-semibold mr-2">8.5</span>
+                        <span>234k views · 8 hours ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 11 - Politics -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/robert/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div>
+                                <div class="text-sm font-semibold">Robert Thompson</div>
+                                <div class="text-xs text-gray-500">JOURNALIST</div>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-red-100 text-red-800 rounded">POLITICS</span>
+                        <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">WORLD</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">International Summit Addresses Global Security Challenges</h2>
+                    <p class="text-sm text-gray-600 mb-4">World leaders convene to discuss pressing security issues and forge new international cooperation agreements aimed at maintaining global stability.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">😊</span>
+                        <span class="font-semibold mr-2">7.3</span>
+                        <span>145k views · 2 days ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Article 12 - Education -->
+            <div class="masonry-item bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://picsum.photos/seed/education/400/260" alt="Education" class="w-full h-52 object-cover">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <img src="https://picsum.photos/seed/jennifer/32/32" alt="Avatar" class="w-8 h-8 rounded-full">
+                            <div class="text-sm font-semibold">Jennifer Lee</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50">Share</button>
+                            <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800">Collect</button>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 mb-3">
+                        <span class="px-2 py-1 text-xs bg-teal-100 text-teal-800 rounded">EDUCATION</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-3">Revolutionary Teaching Method Shows Promising Results</h2>
+                    <p class="text-sm text-gray-600 mb-4">Schools implementing innovative learning techniques report significant improvements in student engagement and academic performance across all grade levels.</p>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <span class="mr-2">📚</span>
+                        <span class="font-semibold mr-2">6.9</span>
+                        <span>78k views · 1 week ago</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-center space-x-2 my-12">
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <button class="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-semibold">1</button>
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">2</button>
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">3</button>
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">4</button>
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">5</button>
+            <span class="px-2 text-gray-500">...</span>
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">20</button>
+            <button class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+</body>
+</html>
