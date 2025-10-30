@@ -99,8 +99,10 @@
           // Check if already collected
           const favorites = getFavorites();
           if (favorites.includes(nid)) {
-            button.textContent = button.getAttribute('data-collected-text') || 'Collected';
-            button.classList.add('opacity-75');
+            button.classList.add('collected');
+            button.classList.add('text-red-500');
+            button.classList.remove('text-gray-600');
+            button.setAttribute('aria-label', button.getAttribute('data-collected-text') || 'Collected');
           }
 
           button.addEventListener('click', function(e) {
@@ -110,11 +112,15 @@
             // Update button state
             const favorites = getFavorites();
             if (favorites.includes(nid)) {
-              button.textContent = button.getAttribute('data-collected-text') || 'Collected';
-              button.classList.add('opacity-75');
+              button.classList.add('collected');
+              button.classList.add('text-red-500');
+              button.classList.remove('text-gray-600');
+              button.setAttribute('aria-label', button.getAttribute('data-collected-text') || 'Collected');
             } else {
-              button.textContent = button.getAttribute('data-collect-text') || 'Collect';
-              button.classList.remove('opacity-75');
+              button.classList.remove('collected');
+              button.classList.remove('text-red-500');
+              button.classList.add('text-gray-600');
+              button.setAttribute('aria-label', button.getAttribute('data-collect-text') || 'Collect');
             }
 
             // Update favorites count in header
