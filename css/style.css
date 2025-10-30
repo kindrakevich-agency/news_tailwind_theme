@@ -169,11 +169,11 @@
 
 /* Share button text color - must be black in light mode */
 .share-button {
-    color: #111827;
+    color: #111827 !important;
 }
 
 .dark .share-button {
-    color: #ffffff;
+    color: #ffffff !important;
 }
 
 /* Global font weight - make all fonts bolder */

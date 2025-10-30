@@ -16,8 +16,14 @@ class FavoritesController extends ControllerBase {
    * Display the favorites page.
    */
   public function content(Request $request) {
+    // Load tags and main menu items like the page preprocess does
+    $tags = _news_theme_load_tags();
+    $main_menu_items = _news_theme_get_main_menu_items();
+
     $build = [
       '#theme' => 'page__favorites',
+      '#tags' => $tags,
+      '#main_menu_items' => $main_menu_items,
       '#cache' => [
         'max-age' => 0, // Don't cache this page
       ],
