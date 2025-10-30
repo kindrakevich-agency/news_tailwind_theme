@@ -1,7 +1,7 @@
 /**
  * @file
  * Main JavaScript for News theme.
- * @version 2.0 - Icon-only buttons (no text on click)
+ * @version 3.0 - Favorites icon links to page (no modal)
  */
 
 (function (Drupal) {
