@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\news_theme\Controller;
+namespace Drupal\news_theme_helper\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\node\Entity\Node;
