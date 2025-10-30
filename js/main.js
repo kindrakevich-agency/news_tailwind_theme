@@ -1,6 +1,7 @@
 /**
  * @file
  * Main JavaScript for News theme.
+ * @version 2.0 - Icon-only buttons (no text on click)
  */
 
 (function (Drupal) {
