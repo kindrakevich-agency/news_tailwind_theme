@@ -1,0 +1,34 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the News theme.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function news_theme_install() {
+  // Set the frontpage to the Frontpage Articles view.
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->set('page.front', '/frontpage')
+    ->save(TRUE);
+
+  // Display a message to the user.
+  \Drupal::messenger()->addStatus(t('News Theme installed successfully. Homepage set to /frontpage.'));
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function news_theme_uninstall() {
+  // Optionally reset the frontpage to default when theme is uninstalled.
+  // Uncomment the following lines if you want to reset to Drupal default.
+  /*
+  \Drupal::configFactory()
+    ->getEditable('system.site')
+    ->set('page.front', '/node')
+    ->save(TRUE);
+  */
+}

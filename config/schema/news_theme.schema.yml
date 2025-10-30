@@ -1,0 +1,48 @@
+name: Settings
+type: theme_settings
+description: 'Settings for the News theme'
+
+footer_site_name:
+  type: textfield
+  label: 'Footer site name'
+  default_value: 'Polissya.today'
+
+footer_description:
+  type: textarea
+  label: 'Footer description'
+  default_value: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.'
+
+footer_email:
+  type: textfield
+  label: 'Footer email address'
+  default_value: 'contact@polissya.today'
+
+footer_facebook:
+  type: url
+  label: 'Facebook URL'
+  default_value: ''
+
+footer_twitter:
+  type: url
+  label: 'Twitter URL'
+  default_value: ''
+
+footer_instagram:
+  type: url
+  label: 'Instagram URL'
+  default_value: ''
+
+footer_youtube:
+  type: url
+  label: 'YouTube URL'
+  default_value: ''
+
+footer_github:
+  type: url
+  label: 'GitHub URL'
+  default_value: ''
+
+footer_medium:
+  type: url
+  label: 'Medium URL'
+  default_value: ''

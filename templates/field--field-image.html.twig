@@ -1,0 +1,23 @@
+{#
+/**
+ * @file
+ * Theme implementation for the image field.
+ *
+ * Available variables:
+ * - items: List of all the field items
+ * - element: The field element
+ */
+#}
+{% if items %}
+    {# Only show the first image #}
+    {% set item = items[0] %}
+    {% if element['#view_mode'] == 'teaser' %}
+        <div class="w-full overflow-hidden">
+            {{ item.content }}
+        </div>
+    {% else %}
+        <div class="w-full overflow-hidden">
+            {{ item.content }}
+        </div>
+    {% endif %}
+{% endif %}

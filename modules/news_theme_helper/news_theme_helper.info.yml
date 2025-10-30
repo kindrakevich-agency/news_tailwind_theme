@@ -1,0 +1,5 @@
+name: News Theme Helper
+type: module
+description: 'Helper module for News Theme - provides favorites page routing'
+core_version_requirement: ^10 || ^11
+package: Custom

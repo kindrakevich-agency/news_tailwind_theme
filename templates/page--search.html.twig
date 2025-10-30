@@ -1,0 +1,51 @@
+{#
+/**
+ * @file
+ * Theme implementation for search results page.
+ *
+ * Available variables:
+ * - page: Page content render array
+ * - logged_in: TRUE if the user is logged in
+ */
+#}
+<!DOCTYPE html>
+<html{{ html_attributes }}>
+<head>
+    <head-placeholder token="{{ placeholder_token }}">
+    <title>{{ head_title|safe_join(' | ') }}</title>
+    <css-placeholder token="{{ placeholder_token }}">
+    <js-placeholder token="{{ placeholder_token }}">
+</head>
+<body{{ attributes.addClass('bg-gray-50') }}>
+    <a href="#main-content" class="visually-hidden focusable">
+        {{ 'Skip to main content'|t }}
+    </a>
+    {{ page_top }}
+
+    {% include '@news_theme/includes/header-menu.html.twig' %}
+    {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': null} %}
+
+    <!-- Filter Buttons - Main Menu -->
+    {% if main_menu_items %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
+                {% for item in main_menu_items %}
+                    <a href="{{ item.url }}" class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
+                        {{ item.title }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Main Content Grid -->
+    <div id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+        {{ page.content }}
+    </div>
+
+    {% include '@news_theme/includes/footer.html.twig' %}
+
+    {{ page_bottom }}
+    <js-bottom-placeholder token="{{ placeholder_token }}">
+</body>
+</html>

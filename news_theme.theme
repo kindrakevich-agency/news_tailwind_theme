@@ -1,0 +1,739 @@
+<?php
+
+/**
+ * @file
+ * Functions to support theming in the News theme.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\Core\Url;
+use Drupal\node\Entity\Node;
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function news_theme_preprocess_html(&$variables) {
+  // Add .page-search class to body on search pages
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name === 'search.view_node_search' || strpos($route_name, 'search') !== FALSE) {
+    $variables['attributes']['class'][] = 'page-search';
+  }
+}
+
+/**
+ * Implements hook_form_system_theme_settings_alter().
+ */
+function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface $form_state) {
+  $form['footer_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Footer Settings'),
+    '#open' => TRUE,
+  ];
+
+  $form['footer_settings']['footer_site_name'] = [
+    '#type' => 'textfield',
+    '#title' => t('Footer Site Name'),
+    '#default_value' => theme_get_setting('footer_site_name') ?: 'Polissya.today',
+  ];
+
+  $form['footer_settings']['footer_description'] = [
+    '#type' => 'textarea',
+    '#title' => t('Footer Description'),
+    '#default_value' => theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.',
+    '#rows' => 3,
+  ];
+
+  $form['footer_settings']['footer_email'] = [
+    '#type' => 'email',
+    '#title' => t('Footer Email'),
+    '#default_value' => theme_get_setting('footer_email') ?: 'contact@polissya.today',
+  ];
+
+  $form['footer_settings']['social_links'] = [
+    '#type' => 'details',
+    '#title' => t('Social Media Links'),
+    '#open' => FALSE,
+  ];
+
+  $form['footer_settings']['social_links']['footer_facebook'] = [
+    '#type' => 'url',
+    '#title' => t('Facebook URL'),
+    '#default_value' => theme_get_setting('footer_facebook') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_twitter'] = [
+    '#type' => 'url',
+    '#title' => t('Twitter URL'),
+    '#default_value' => theme_get_setting('footer_twitter') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_instagram'] = [
+    '#type' => 'url',
+    '#title' => t('Instagram URL'),
+    '#default_value' => theme_get_setting('footer_instagram') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_youtube'] = [
+    '#type' => 'url',
+    '#title' => t('YouTube URL'),
+    '#default_value' => theme_get_setting('footer_youtube') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_github'] = [
+    '#type' => 'url',
+    '#title' => t('GitHub URL'),
+    '#default_value' => theme_get_setting('footer_github') ?: '',
+  ];
+
+  $form['footer_settings']['social_links']['footer_medium'] = [
+    '#type' => 'url',
+    '#title' => t('Medium URL'),
+    '#default_value' => theme_get_setting('footer_medium') ?: '',
+  ];
+
+  // Newsletter/Featured block settings.
+  $form['newsletter_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Newsletter/Featured Block Settings'),
+    '#open' => FALSE,
+  ];
+
+  $form['newsletter_settings']['newsletter_header'] = [
+    '#type' => 'textfield',
+    '#title' => t('Newsletter Header Text'),
+    '#default_value' => theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN',
+    '#description' => t('The header text displayed above the featured article section on the homepage.'),
+  ];
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for page templates.
+ */
+function news_theme_preprocess_page(&$variables) {
+  // Load tags from taxonomy vocabulary for header navigation.
+  $variables['tags'] = _news_theme_load_tags();
+
+  // Get search query from request for search field.
+  $request = \Drupal::request();
+  $variables['search_query'] = $request->query->get('keys') ?: '';
+
+  // Check if we're on a taxonomy term page and pass the current term.
+  $route_match = \Drupal::routeMatch();
+  $variables['current_term'] = NULL;
+  if ($route_match->getRouteName() == 'entity.taxonomy_term.canonical') {
+    $term = $route_match->getParameter('taxonomy_term');
+    if ($term) {
+      $variables['current_term'] = $term;
+    }
+  }
+
+  // Load footer settings.
+  $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
+  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
+  $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
+  $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
+  $variables['footer_instagram'] = theme_get_setting('footer_instagram') ?: '';
+  $variables['footer_youtube'] = theme_get_setting('footer_youtube') ?: '';
+  $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
+  $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
+
+  // Load main menu for footer.
+  $menu_tree = \Drupal::menuTree();
+  $menu_name = 'main';
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  $parameters->setMaxDepth(1);
+  $tree = $menu_tree->load($menu_name, $parameters);
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+  ];
+  $tree = $menu_tree->transform($tree, $manipulators);
+  $variables['footer_menu'] = $menu_tree->build($tree);
+
+  // Load main menu items for filter buttons.
+  $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Load newsletter settings and featured articles for frontpage.
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
+    $variables['newsletter_data'] = _news_theme_get_newsletter_articles();
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for taxonomy term templates.
+ */
+function news_theme_preprocess_taxonomy_term(&$variables) {
+  // Load tags from taxonomy vocabulary for header navigation.
+  $variables['tags'] = _news_theme_load_tags();
+
+  // Pass current term to template.
+  $variables['term'] = $variables['term'];
+
+  // Get search query from request for search field.
+  $request = \Drupal::request();
+  $variables['search_query'] = $request->query->get('keys') ?: '';
+
+  // Load footer settings.
+  $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
+  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
+  $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
+  $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
+  $variables['footer_instagram'] = theme_get_setting('footer_instagram') ?: '';
+  $variables['footer_youtube'] = theme_get_setting('footer_youtube') ?: '';
+  $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
+  $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
+
+  // Load main menu for footer.
+  $menu_tree = \Drupal::menuTree();
+  $menu_name = 'main';
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  $parameters->setMaxDepth(1);
+  $tree = $menu_tree->load($menu_name, $parameters);
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+  ];
+  $tree = $menu_tree->transform($tree, $manipulators);
+  $variables['footer_menu'] = $menu_tree->build($tree);
+
+  // Load main menu items for filter buttons.
+  $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for node templates.
+ */
+function news_theme_preprocess_node(&$variables) {
+  /** @var \Drupal\node\NodeInterface $node */
+  $node = $variables['node'];
+
+  // Add author name and avatar.
+  $author = $node->getOwner();
+
+  // Check if user is anonymous.
+  if ($author->isAnonymous()) {
+    $variables['author_name'] = t('Anonymous');
+    $variables['author_avatar'] = NULL;
+    $variables['author_initial'] = 'A';
+  }
+  else {
+    $variables['author_name'] = $author->getDisplayName();
+
+    // Check if user has field_avatar field.
+    if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
+      $avatar_field = $author->get('field_avatar')->first();
+      if ($avatar_field && $avatar_field->entity) {
+        $variables['author_avatar'] = \Drupal::service('file_url_generator')->generateAbsoluteString($avatar_field->entity->getFileUri());
+      }
+      else {
+        $variables['author_avatar'] = NULL;
+      }
+    }
+    else {
+      $variables['author_avatar'] = NULL;
+    }
+
+    // Get first letter of author name for initial.
+    $name = $author->getDisplayName();
+    $variables['author_initial'] = mb_strtoupper(mb_substr($name, 0, 1));
+  }
+
+  // Add formatted date.
+  $variables['date'] = \Drupal::service('date.formatter')->format(
+    $node->getCreatedTime(),
+    'custom',
+    'j F Y'
+  );
+
+  // Calculate reading time based on body field.
+  if ($node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body = $node->get('body')->value;
+    $word_count = str_word_count(strip_tags($body));
+    $reading_time = ceil($word_count / 200); // Assuming 200 words per minute.
+    $variables['reading_time'] = $reading_time;
+  }
+
+  // Get view count from statistics module if available.
+  $variables['view_count'] = 0;
+  if (\Drupal::moduleHandler()->moduleExists('statistics')) {
+    // Try to get statistics from the node_counter table directly.
+    $database = \Drupal::database();
+    try {
+      // Check if table exists first.
+      if ($database->schema()->tableExists('node_counter')) {
+        $query = $database->select('node_counter', 'nc')
+          ->fields('nc', ['totalcount'])
+          ->condition('nid', $node->id());
+        $result = $query->execute()->fetchField();
+        if ($result !== FALSE) {
+          $variables['view_count'] = (int) $result;
+        }
+      }
+    }
+    catch (\Exception $e) {
+      // Log the error but don't break the page.
+      \Drupal::logger('news_theme')->error('Error fetching view count: @message', ['@message' => $e->getMessage()]);
+    }
+  }
+
+  // Load tags for header navigation.
+  $variables['tags'] = _news_theme_load_tags();
+
+  // Get search query from request for search field.
+  $request = \Drupal::request();
+  $variables['search_query'] = $request->query->get('keys') ?: '';
+
+  // Add plain text body for teaser view mode.
+  if ($variables['view_mode'] == 'teaser' && $node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body_value = $node->get('body')->value;
+    // Strip HTML tags and get plain text.
+    $plain_text = strip_tags($body_value);
+    // Truncate to 200 characters.
+    if (mb_strlen($plain_text) > 200) {
+      $plain_text = mb_substr($plain_text, 0, 200) . '...';
+    }
+    $variables['body_plain'] = $plain_text;
+  }
+
+  // Get prev/next articles and related articles (only for full view mode).
+  if ($variables['view_mode'] == 'full' && $node->bundle() == 'article') {
+    $prev_next = _news_theme_get_prev_next_articles($node);
+    $variables['prev_article'] = $prev_next['prev'];
+    $variables['next_article'] = $prev_next['next'];
+
+    // Get related articles based on tags.
+    $variables['related_articles'] = _news_theme_get_related_articles($node);
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for field templates.
+ */
+function news_theme_preprocess_field(&$variables) {
+  $element = $variables['element'];
+
+  // Format tags field as links.
+  if ($element['#field_name'] == 'field_tags') {
+    // Define color schemes for tags.
+    $color_schemes = [
+      ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
+      ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'hover' => 'hover:bg-purple-200'],
+      ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'hover' => 'hover:bg-red-200'],
+      ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'hover' => 'hover:bg-green-200'],
+      ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'hover' => 'hover:bg-yellow-200'],
+      ['bg' => 'bg-pink-100', 'text' => 'text-pink-800', 'hover' => 'hover:bg-pink-200'],
+      ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'hover' => 'hover:bg-indigo-200'],
+      ['bg' => 'bg-teal-100', 'text' => 'text-teal-800', 'hover' => 'hover:bg-teal-200'],
+    ];
+
+    $variables['tag_colors'] = [];
+    foreach ($variables['items'] as $delta => $item) {
+      if (isset($element['#items'][$delta])) {
+        $tid = $element['#items'][$delta]->target_id;
+        $term = Term::load($tid);
+        if ($term) {
+          // Set URL and title for the tag link.
+          $variables['items'][$delta]['content']['#url'] = Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $tid]);
+          $variables['items'][$delta]['content']['#title'] = $term->getName();
+
+          // Assign a consistent color based on term ID.
+          $color_index = $tid % count($color_schemes);
+          $variables['tag_colors'][$delta] = $color_schemes[$color_index];
+        }
+      }
+    }
+  }
+
+  // For image field, only show first image.
+  if ($element['#field_name'] == 'field_image' && $element['#view_mode'] == 'teaser') {
+    // Keep only the first item.
+    if (count($variables['items']) > 1) {
+      $variables['items'] = array_slice($variables['items'], 0, 1);
+    }
+  }
+}
+
+/**
+ * Helper function to load tags from taxonomy vocabulary.
+ */
+function _news_theme_load_tags() {
+  $tags = [];
+
+  // Load all terms from the 'tags' vocabulary.
+  $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+  $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
+
+  foreach ($terms as $term) {
+    $tags[] = [
+      'id' => $term->id(),
+      'name' => $term->getName(),
+    ];
+  }
+
+  return $tags;
+}
+
+/**
+ * Helper function to get main menu items.
+ */
+function _news_theme_get_main_menu_items() {
+  $menu_tree = \Drupal::menuTree();
+  $menu_name = 'main';
+  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+  $parameters->setMaxDepth(1);
+  $tree = $menu_tree->load($menu_name, $parameters);
+  $manipulators = [
+    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+  ];
+  $tree = $menu_tree->transform($tree, $manipulators);
+
+  $menu_items = [];
+  foreach ($tree as $element) {
+    $menu_items[] = [
+      'title' => $element->link->getTitle(),
+      'url' => $element->link->getUrlObject(),
+    ];
+  }
+
+  return $menu_items;
+}
+
+/**
+ * Helper function to get previous and next articles based on tags and date.
+ */
+function _news_theme_get_prev_next_articles($current_node) {
+  $result = ['prev' => NULL, 'next' => NULL];
+
+  // Get tags from current article.
+  if (!$current_node->hasField('field_tags') || $current_node->get('field_tags')->isEmpty()) {
+    return $result;
+  }
+
+  $tag_ids = [];
+  foreach ($current_node->get('field_tags') as $tag) {
+    $tag_ids[] = $tag->target_id;
+  }
+
+  if (empty($tag_ids)) {
+    return $result;
+  }
+
+  $current_created = $current_node->getCreatedTime();
+  $current_nid = $current_node->id();
+
+  // Query for previous article (older).
+  $query_prev = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->condition('nid', $current_nid, '!=')
+    ->condition('field_tags', $tag_ids, 'IN')
+    ->condition('created', $current_created, '<')
+    ->sort('created', 'DESC')
+    ->range(0, 1)
+    ->accessCheck(TRUE);
+
+  $nids_prev = $query_prev->execute();
+  if (!empty($nids_prev)) {
+    $prev_nid = reset($nids_prev);
+    $prev_node = Node::load($prev_nid);
+    if ($prev_node) {
+      $result['prev'] = [
+        'url' => $prev_node->toUrl()->toString(),
+        'title' => $prev_node->getTitle(),
+      ];
+    }
+  }
+
+  // Query for next article (newer).
+  $query_next = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->condition('nid', $current_nid, '!=')
+    ->condition('field_tags', $tag_ids, 'IN')
+    ->condition('created', $current_created, '>')
+    ->sort('created', 'ASC')
+    ->range(0, 1)
+    ->accessCheck(TRUE);
+
+  $nids_next = $query_next->execute();
+  if (!empty($nids_next)) {
+    $next_nid = reset($nids_next);
+    $next_node = Node::load($next_nid);
+    if ($next_node) {
+      $result['next'] = [
+        'url' => $next_node->toUrl()->toString(),
+        'title' => $next_node->getTitle(),
+      ];
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Helper function to get related articles based on tags (up to 10).
+ */
+function _news_theme_get_related_articles($current_node) {
+  $related_articles = [];
+
+  // Get tags from current article.
+  if (!$current_node->hasField('field_tags') || $current_node->get('field_tags')->isEmpty()) {
+    return $related_articles;
+  }
+
+  $tag_ids = [];
+  foreach ($current_node->get('field_tags') as $tag) {
+    $tag_ids[] = $tag->target_id;
+  }
+
+  if (empty($tag_ids)) {
+    return $related_articles;
+  }
+
+  $current_nid = $current_node->id();
+
+  // Query for related articles.
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->condition('nid', $current_nid, '!=')
+    ->condition('field_tags', $tag_ids, 'IN')
+    ->sort('created', 'DESC')
+    ->range(0, 10)
+    ->accessCheck(TRUE);
+
+  $nids = $query->execute();
+
+  if (!empty($nids)) {
+    $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+    foreach ($nids as $nid) {
+      $node = Node::load($nid);
+      if ($node) {
+        $related_articles[] = $view_builder->view($node, 'teaser');
+      }
+    }
+  }
+
+  return $related_articles;
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for search result templates.
+ */
+function news_theme_preprocess_search_result(&$variables) {
+  // Get the node from the result if it's a node search result.
+  if (isset($variables['result']['node'])) {
+    $node = $variables['result']['node'];
+
+    // Add the image if available.
+    if ($node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
+      $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+      $image_render = $view_builder->viewField($node->get('field_image'), [
+        'label' => 'hidden',
+        'type' => 'image',
+        'settings' => [
+          'image_style' => '',
+          'image_link' => '',
+        ],
+      ]);
+      // Only show first image.
+      if (isset($image_render[0])) {
+        $variables['image'] = $image_render[0];
+      }
+    }
+
+    // Add tags if available.
+    if ($node->hasField('field_tags') && !$node->get('field_tags')->isEmpty()) {
+      $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+      $variables['tags'] = $view_builder->viewField($node->get('field_tags'), [
+        'label' => 'hidden',
+        'type' => 'entity_reference_label',
+        'settings' => [
+          'link' => TRUE,
+        ],
+      ]);
+    }
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter() for page templates.
+ */
+function news_theme_theme_suggestions_page_alter(array &$suggestions, array $variables) {
+  // Add page--front suggestion for front page.
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $suggestions[] = 'page__front';
+  }
+
+  // Add page--search suggestion for search pages.
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name == 'search.view' || $route_name == 'search.view_node_search') {
+    $suggestions[] = 'page__search';
+  }
+}
+
+/**
+ * Implements hook_theme_suggestions_HOOK_alter() for taxonomy term templates.
+ */
+function news_theme_theme_suggestions_taxonomy_term_alter(array &$suggestions, array $variables) {
+  /** @var \Drupal\taxonomy\TermInterface $term */
+  $term = $variables['elements']['#taxonomy_term'];
+  $vocabulary_id = $term->bundle();
+
+  // Add taxonomy-term--tags suggestion for tags vocabulary.
+  $suggestions[] = 'taxonomy_term__' . $vocabulary_id;
+}
+
+/**
+ * Helper function to get newsletter featured articles.
+ *
+ * @return array
+ *   Array containing latest_article and featured_article data.
+ */
+function _news_theme_get_newsletter_articles() {
+  $result = [
+    'latest_article' => NULL,
+    'featured_article' => NULL,
+  ];
+
+  // Query for the latest 2 published articles.
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->sort('created', 'DESC')
+    ->range(0, 2)
+    ->accessCheck(TRUE);
+
+  $nids = $query->execute();
+
+  if (count($nids) >= 2) {
+    $nodes = Node::loadMultiple($nids);
+    $nodes = array_values($nodes);
+
+    // First article (latest) - for the tagline.
+    if (isset($nodes[0])) {
+      $latest = $nodes[0];
+      $result['latest_article'] = [
+        'title' => $latest->getTitle(),
+        'url' => $latest->toUrl()->toString(),
+      ];
+    }
+
+    // Second article - for the featured card.
+    if (isset($nodes[1])) {
+      $featured = $nodes[1];
+      $author = $featured->getOwner();
+
+      // Get first tag name if available.
+      $tag_name = '';
+      if ($featured->hasField('field_tags') && !$featured->get('field_tags')->isEmpty()) {
+        $first_tag = $featured->get('field_tags')->first();
+        if ($first_tag) {
+          $tag_term = Term::load($first_tag->target_id);
+          if ($tag_term) {
+            $tag_name = $tag_term->getName();
+          }
+        }
+      }
+
+      // Get excerpt from body.
+      $excerpt = '';
+      if ($featured->hasField('body') && !$featured->get('body')->isEmpty()) {
+        $body = $featured->get('body')->value;
+        $plain_text = strip_tags($body);
+        if (mb_strlen($plain_text) > 200) {
+          $excerpt = mb_substr($plain_text, 0, 200) . '...';
+        }
+        else {
+          $excerpt = $plain_text;
+        }
+      }
+
+      // Calculate reading time.
+      $reading_time = 1;
+      if ($featured->hasField('body') && !$featured->get('body')->isEmpty()) {
+        $body = $featured->get('body')->value;
+        $word_count = str_word_count(strip_tags($body));
+        $reading_time = ceil($word_count / 200);
+      }
+
+      // Calculate time ago.
+      $created = $featured->getCreatedTime();
+      $time_ago = _news_theme_time_ago($created);
+
+      // Get author avatar from field_avatar.
+      $author_avatar = NULL;
+      if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
+        $avatar_field = $author->get('field_avatar')->first();
+        if ($avatar_field && $avatar_field->entity) {
+          $author_avatar = \Drupal::service('file_url_generator')->generateAbsoluteString($avatar_field->entity->getFileUri());
+        }
+      }
+
+      $result['featured_article'] = [
+        'title' => $featured->getTitle(),
+        'url' => $featured->toUrl()->toString(),
+        'author_name' => $author->getDisplayName(),
+        'author_initial' => mb_substr($author->getDisplayName(), 0, 1),
+        'author_avatar' => $author_avatar,
+        'excerpt' => $excerpt,
+        'tags' => $tag_name,
+        'reading_time' => $reading_time,
+        'time_ago' => $time_ago,
+        'image' => NULL,
+      ];
+
+      // Get image if available.
+      if ($featured->hasField('field_image') && !$featured->get('field_image')->isEmpty()) {
+        $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+        $image_render = $view_builder->viewField($featured->get('field_image'), [
+          'label' => 'hidden',
+          'type' => 'image',
+          'settings' => [
+            'image_style' => '',
+            'image_link' => '',
+          ],
+        ]);
+        if (isset($image_render[0])) {
+          $result['featured_article']['image'] = $image_render[0];
+        }
+      }
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Helper function to calculate time ago.
+ *
+ * @param int $timestamp
+ *   Unix timestamp.
+ *
+ * @return string
+ *   Time ago string.
+ */
+function _news_theme_time_ago($timestamp) {
+  $time_ago = \Drupal::time()->getRequestTime() - $timestamp;
+
+  if ($time_ago < 60) {
+    return t('@count seconds ago', ['@count' => $time_ago]);
+  }
+  elseif ($time_ago < 3600) {
+    $minutes = floor($time_ago / 60);
+    return t('@count minutes ago', ['@count' => $minutes]);
+  }
+  elseif ($time_ago < 86400) {
+    $hours = floor($time_ago / 3600);
+    return t('@count hours ago', ['@count' => $hours]);
+  }
+  else {
+    $days = floor($time_ago / 86400);
+    return t('@count days ago', ['@count' => $days]);
+  }
+}

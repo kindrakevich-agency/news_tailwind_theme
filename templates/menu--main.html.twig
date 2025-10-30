@@ -1,0 +1,24 @@
+{#
+/**
+ * @file
+ * Theme implementation for the main menu in footer.
+ */
+#}
+{% import _self as menus %}
+
+{#
+  We call a macro which calls itself to render the full tree.
+  @see https://twig.symfony.com/doc/1.x/tags/macro.html
+#}
+{{ menus.menu_links(items, attributes, 0) }}
+
+{% macro menu_links(items, attributes, menu_level) %}
+  {% import _self as menus %}
+  {% if items %}
+    {% if menu_level == 0 %}
+      {% for item in items %}
+        <a href="{{ item.url }}" class="text-gray-900 font-semibold hover:text-gray-600 transition-colors">{{ item.title }}</a>
+      {% endfor %}
+    {% endif %}
+  {% endif %}
+{% endmacro %}

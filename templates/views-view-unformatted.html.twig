@@ -1,0 +1,17 @@
+{#
+/**
+ * @file
+ * Theme implementation for unformatted views rows.
+ *
+ * Available variables:
+ * - rows: A list of the view rows.
+ * - view: The view object.
+ */
+#}
+<div class="masonry">
+    {% for row in rows %}
+        <div class="masonry-item">
+            {{ row.content }}
+        </div>
+    {% endfor %}
+</div>
