@@ -6,12 +6,14 @@
  * Available variables:
  * - items: List of all the field items
  * - element: The field element
+ * - tag_colors: Array of color classes for each tag
  */
 #}
 {% if items %}
-    {% for item in items %}
+    {% for key, item in items %}
+        {% set colors = tag_colors[key] ?? {bg: 'bg-purple-100', text: 'text-purple-800', hover: 'hover:bg-purple-200'} %}
         <a href="{{ item.content['#url'] }}"
-           class="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded hover:bg-purple-200 transition-colors inline-block">
+           class="px-2 py-1 text-xs {{ colors.bg }} {{ colors.text }} rounded {{ colors.hover }} transition-colors inline-block">
             {{ item.content['#title']|upper }}
         </a>
     {% endfor %}

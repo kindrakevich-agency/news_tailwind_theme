@@ -198,6 +198,15 @@ function news_theme_preprocess_node(&$variables) {
     $variables['reading_time'] = $reading_time;
   }
 
+  // Get view count from statistics module if available.
+  $variables['view_count'] = 0;
+  if (\Drupal::moduleHandler()->moduleExists('statistics')) {
+    $statistics = \Drupal::service('statistics.storage.node')->fetchView($node->id());
+    if ($statistics) {
+      $variables['view_count'] = $statistics->getTotalCount();
+    }
+  }
+
   // Load tags for header navigation.
   $variables['tags'] = _news_theme_load_tags();
 
@@ -236,6 +245,19 @@ function news_theme_preprocess_field(&$variables) {
 
   // Format tags field as links.
   if ($element['#field_name'] == 'field_tags') {
+    // Define color schemes for tags.
+    $color_schemes = [
+      ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
+      ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'hover' => 'hover:bg-purple-200'],
+      ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'hover' => 'hover:bg-red-200'],
+      ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'hover' => 'hover:bg-green-200'],
+      ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'hover' => 'hover:bg-yellow-200'],
+      ['bg' => 'bg-pink-100', 'text' => 'text-pink-800', 'hover' => 'hover:bg-pink-200'],
+      ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'hover' => 'hover:bg-indigo-200'],
+      ['bg' => 'bg-teal-100', 'text' => 'text-teal-800', 'hover' => 'hover:bg-teal-200'],
+    ];
+
+    $variables['tag_colors'] = [];
     foreach ($variables['items'] as $delta => $item) {
       if (isset($item['content']['#plain_text'])) {
         $tid = $element['#items'][$delta]->target_id;
@@ -243,6 +265,10 @@ function news_theme_preprocess_field(&$variables) {
         if ($term) {
           $variables['items'][$delta]['content']['#url'] = Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $tid]);
           $variables['items'][$delta]['content']['#title'] = $term->getName();
+
+          // Assign a consistent random color based on term ID.
+          $color_index = $tid % count($color_schemes);
+          $variables['tag_colors'][$delta] = $color_schemes[$color_index];
         }
       }
     }
