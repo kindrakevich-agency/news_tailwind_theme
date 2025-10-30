@@ -10,7 +10,7 @@
  */
 #}
 {% if latest_article and featured_article %}
-<div class="max-w-6xl mx-auto px-4 py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <!-- Header -->
     <div class="text-center mb-12">
         <p class="text-gray-500 uppercase tracking-widest text-sm mb-4">{{ newsletter_header|default('WELCOME TO BULETIN')|t }}</p>
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Article Card -->
-    <div class="bg-white rounded-3xl shadow-lg overflow-hidden max-w-5xl mx-auto">
+    <div class="bg-white rounded-3xl shadow-lg overflow-hidden mx-auto">
         <div class="grid md:grid-cols-2 gap-0">
             <!-- Image Section -->
             <div class="relative md:h-auto">
