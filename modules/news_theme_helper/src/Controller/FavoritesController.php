@@ -16,9 +16,36 @@ class FavoritesController extends ControllerBase {
    * Display the favorites page.
    */
   public function content(Request $request) {
-    // Load tags and main menu items like the page preprocess does
-    $tags = _news_theme_load_tags();
-    $main_menu_items = _news_theme_get_main_menu_items();
+    // Load tags from taxonomy vocabulary
+    $tags = [];
+    $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+    $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
+    foreach ($terms as $term) {
+      $tags[] = [
+        'id' => $term->id(),
+        'name' => $term->getName(),
+      ];
+    }
+
+    // Load main menu items
+    $menu_tree = \Drupal::menuTree();
+    $menu_name = 'main';
+    $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
+    $parameters->setMaxDepth(1);
+    $tree = $menu_tree->load($menu_name, $parameters);
+    $manipulators = [
+      ['callable' => 'menu.default_tree_manipulators:checkAccess'],
+      ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
+    ];
+    $tree = $menu_tree->transform($tree, $manipulators);
+
+    $main_menu_items = [];
+    foreach ($tree as $element) {
+      $main_menu_items[] = [
+        'title' => $element->link->getTitle(),
+        'url' => $element->link->getUrlObject(),
+      ];
+    }
 
     $build = [
       '#theme' => 'page__favorites',

@@ -162,8 +162,11 @@
 
 /* Hide search result message h2 */
 .page-search #main-content h2,
+.page-search .region-content h2,
 .search-results h2,
-.region-content .search-results h2 {
+.region-content .search-results h2,
+body[class*="path-search"] h2.page-title,
+body[class*="path-search"] #main-content > h2 {
     display: none !important;
 }
 
