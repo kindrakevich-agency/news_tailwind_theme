@@ -1,0 +1,72 @@
+{#
+/**
+ * @file
+ * Theme implementation for newsletter featured section.
+ *
+ * Available variables:
+ * - newsletter_header: Configurable header text
+ * - latest_article: The latest article (for the tagline)
+ * - featured_article: The second article (for the featured card)
+ */
+#}
+{% if latest_article and featured_article %}
+<div class="max-w-6xl mx-auto px-4 py-12">
+    <!-- Header -->
+    <div class="text-center mb-12">
+        <p class="text-gray-500 uppercase tracking-widest text-sm mb-4">{{ newsletter_header|default('WELCOME TO BULETIN')|t }}</p>
+        <h2 class="text-4xl md:text-5xl font-bold text-gray-900">
+            {{ latest_article.title }}
+        </h2>
+    </div>
+
+    <!-- Article Card -->
+    <div class="bg-white rounded-3xl shadow-lg overflow-hidden max-w-5xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-0">
+            <!-- Image Section -->
+            <div class="relative h-96 md:h-auto">
+                {% if featured_article.image %}
+                    <div class="absolute inset-0">
+                        {{ featured_article.image }}
+                    </div>
+                {% else %}
+                    <div class="absolute inset-0 bg-gradient-to-b from-teal-400 to-teal-600"></div>
+                {% endif %}
+            </div>
+
+            <!-- Content Section -->
+            <div class="p-8 md:p-12 flex flex-col justify-center">
+                <!-- Source and Time -->
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
+                        <span class="text-white font-bold text-xl">{{ featured_article.author_initial }}</span>
+                    </div>
+                    <span class="text-gray-900 font-medium">{{ featured_article.author_name }}</span>
+                    <span class="text-gray-400">•</span>
+                    <span class="text-gray-500">{{ featured_article.time_ago }}</span>
+                </div>
+
+                <!-- Title -->
+                <h3 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                    <a href="{{ featured_article.url }}" class="hover:text-teal-600 transition-colors">
+                        {{ featured_article.title }}
+                    </a>
+                </h3>
+
+                <!-- Description -->
+                <p class="text-gray-600 text-lg mb-6 leading-relaxed">
+                    {{ featured_article.excerpt }}
+                </p>
+
+                <!-- Meta Info -->
+                <div class="flex items-center gap-3 text-gray-500">
+                    {% if featured_article.tags %}
+                        <span class="text-teal-600 font-medium">{{ featured_article.tags }}</span>
+                        <span>•</span>
+                    {% endif %}
+                    <span>{{ featured_article.reading_time }} {{ 'min read'|t }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

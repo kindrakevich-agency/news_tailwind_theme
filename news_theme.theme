@@ -80,6 +80,20 @@ function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface 
     '#title' => t('Medium URL'),
     '#default_value' => theme_get_setting('footer_medium') ?: '',
   ];
+
+  // Newsletter/Featured block settings.
+  $form['newsletter_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Newsletter/Featured Block Settings'),
+    '#open' => FALSE,
+  ];
+
+  $form['newsletter_settings']['newsletter_header'] = [
+    '#type' => 'textfield',
+    '#title' => t('Newsletter Header Text'),
+    '#default_value' => theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN',
+    '#description' => t('The header text displayed above the featured article section on the homepage.'),
+  ];
 }
 
 /**
@@ -129,6 +143,12 @@ function news_theme_preprocess_page(&$variables) {
 
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Load newsletter settings and featured articles for frontpage.
+  if (\Drupal::service('path.matcher')->isFrontPage()) {
+    $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
+    $variables['newsletter_data'] = _news_theme_get_newsletter_articles();
+  }
 }
 
 /**
@@ -201,22 +221,23 @@ function news_theme_preprocess_node(&$variables) {
   // Get view count from statistics module if available.
   $variables['view_count'] = 0;
   if (\Drupal::moduleHandler()->moduleExists('statistics')) {
+    // Try to get statistics from the node_counter table directly.
+    $database = \Drupal::database();
     try {
-      $statistics = \Drupal::service('statistics.storage.node')->fetchView($node->id());
-      if ($statistics) {
-        $variables['view_count'] = $statistics->getTotalCount();
+      // Check if table exists first.
+      if ($database->schema()->tableExists('node_counter')) {
+        $query = $database->select('node_counter', 'nc')
+          ->fields('nc', ['totalcount'])
+          ->condition('nid', $node->id());
+        $result = $query->execute()->fetchField();
+        if ($result !== FALSE) {
+          $variables['view_count'] = (int) $result;
+        }
       }
     }
     catch (\Exception $e) {
-      // If statistics service fails, fallback to database query.
-      $database = \Drupal::database();
-      $query = $database->select('node_counter', 'nc')
-        ->fields('nc', ['totalcount'])
-        ->condition('nid', $node->id());
-      $result = $query->execute()->fetchField();
-      if ($result) {
-        $variables['view_count'] = $result;
-      }
+      // Log the error but don't break the page.
+      \Drupal::logger('news_theme')->error('Error fetching view count: @message', ['@message' => $e->getMessage()]);
     }
   }
 
@@ -527,4 +548,143 @@ function news_theme_theme_suggestions_taxonomy_term_alter(array &$suggestions, a
 
   // Add taxonomy-term--tags suggestion for tags vocabulary.
   $suggestions[] = 'taxonomy_term__' . $vocabulary_id;
+}
+
+/**
+ * Helper function to get newsletter featured articles.
+ *
+ * @return array
+ *   Array containing latest_article and featured_article data.
+ */
+function _news_theme_get_newsletter_articles() {
+  $result = [
+    'latest_article' => NULL,
+    'featured_article' => NULL,
+  ];
+
+  // Query for the latest 2 published articles.
+  $query = \Drupal::entityQuery('node')
+    ->condition('type', 'article')
+    ->condition('status', 1)
+    ->sort('created', 'DESC')
+    ->range(0, 2)
+    ->accessCheck(TRUE);
+
+  $nids = $query->execute();
+
+  if (count($nids) >= 2) {
+    $nodes = Node::load_multiple($nids);
+    $nodes = array_values($nodes);
+
+    // First article (latest) - for the tagline.
+    if (isset($nodes[0])) {
+      $latest = $nodes[0];
+      $result['latest_article'] = [
+        'title' => $latest->getTitle(),
+        'url' => $latest->toUrl()->toString(),
+      ];
+    }
+
+    // Second article - for the featured card.
+    if (isset($nodes[1])) {
+      $featured = $nodes[1];
+      $author = $featured->getOwner();
+
+      // Get first tag name if available.
+      $tag_name = '';
+      if ($featured->hasField('field_tags') && !$featured->get('field_tags')->isEmpty()) {
+        $first_tag = $featured->get('field_tags')->first();
+        if ($first_tag) {
+          $tag_term = Term::load($first_tag->target_id);
+          if ($tag_term) {
+            $tag_name = $tag_term->getName();
+          }
+        }
+      }
+
+      // Get excerpt from body.
+      $excerpt = '';
+      if ($featured->hasField('body') && !$featured->get('body')->isEmpty()) {
+        $body = $featured->get('body')->value;
+        $plain_text = strip_tags($body);
+        if (mb_strlen($plain_text) > 200) {
+          $excerpt = mb_substr($plain_text, 0, 200) . '...';
+        }
+        else {
+          $excerpt = $plain_text;
+        }
+      }
+
+      // Calculate reading time.
+      $reading_time = 1;
+      if ($featured->hasField('body') && !$featured->get('body')->isEmpty()) {
+        $body = $featured->get('body')->value;
+        $word_count = str_word_count(strip_tags($body));
+        $reading_time = ceil($word_count / 200);
+      }
+
+      // Calculate time ago.
+      $created = $featured->getCreatedTime();
+      $time_ago = _news_theme_time_ago($created);
+
+      $result['featured_article'] = [
+        'title' => $featured->getTitle(),
+        'url' => $featured->toUrl()->toString(),
+        'author_name' => $author->getDisplayName(),
+        'author_initial' => mb_substr($author->getDisplayName(), 0, 1),
+        'excerpt' => $excerpt,
+        'tags' => $tag_name,
+        'reading_time' => $reading_time,
+        'time_ago' => $time_ago,
+        'image' => NULL,
+      ];
+
+      // Get image if available.
+      if ($featured->hasField('field_image') && !$featured->get('field_image')->isEmpty()) {
+        $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
+        $image_render = $view_builder->viewField($featured->get('field_image'), [
+          'label' => 'hidden',
+          'type' => 'image',
+          'settings' => [
+            'image_style' => '',
+            'image_link' => '',
+          ],
+        ]);
+        if (isset($image_render[0])) {
+          $result['featured_article']['image'] = $image_render[0];
+        }
+      }
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Helper function to calculate time ago.
+ *
+ * @param int $timestamp
+ *   Unix timestamp.
+ *
+ * @return string
+ *   Time ago string.
+ */
+function _news_theme_time_ago($timestamp) {
+  $time_ago = \Drupal::time()->getRequestTime() - $timestamp;
+
+  if ($time_ago < 60) {
+    return t('@count seconds ago', ['@count' => $time_ago]);
+  }
+  elseif ($time_ago < 3600) {
+    $minutes = floor($time_ago / 60);
+    return t('@count minutes ago', ['@count' => $minutes]);
+  }
+  elseif ($time_ago < 86400) {
+    $hours = floor($time_ago / 3600);
+    return t('@count hours ago', ['@count' => $hours]);
+  }
+  else {
+    $days = floor($time_ago / 86400);
+    return t('@count days ago', ['@count' => $days]);
+  }
 }

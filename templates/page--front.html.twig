@@ -38,6 +38,15 @@
         </div>
     {% endif %}
 
+    <!-- Newsletter Featured Section -->
+    {% if newsletter_data %}
+        {% include '@news_theme/includes/newsletter-featured.html.twig' with {
+            'newsletter_header': newsletter_header,
+            'latest_article': newsletter_data.latest_article,
+            'featured_article': newsletter_data.featured_article
+        } %}
+    {% endif %}
+
     <!-- Main Content Grid -->
     <div id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         {{ page.content }}
