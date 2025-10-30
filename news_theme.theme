@@ -666,11 +666,21 @@ function _news_theme_get_newsletter_articles() {
       $created = $featured->getCreatedTime();
       $time_ago = _news_theme_time_ago($created);
 
+      // Get author avatar from field_avatar.
+      $author_avatar = NULL;
+      if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
+        $avatar_field = $author->get('field_avatar')->first();
+        if ($avatar_field && $avatar_field->entity) {
+          $author_avatar = \Drupal::service('file_url_generator')->generateAbsoluteString($avatar_field->entity->getFileUri());
+        }
+      }
+
       $result['featured_article'] = [
         'title' => $featured->getTitle(),
         'url' => $featured->toUrl()->toString(),
         'author_name' => $author->getDisplayName(),
         'author_initial' => mb_substr($author->getDisplayName(), 0, 1),
+        'author_avatar' => $author_avatar,
         'excerpt' => $excerpt,
         'tags' => $tag_name,
         'reading_time' => $reading_time,
