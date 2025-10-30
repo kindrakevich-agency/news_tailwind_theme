@@ -201,9 +201,22 @@ function news_theme_preprocess_node(&$variables) {
   // Get view count from statistics module if available.
   $variables['view_count'] = 0;
   if (\Drupal::moduleHandler()->moduleExists('statistics')) {
-    $statistics = \Drupal::service('statistics.storage.node')->fetchView($node->id());
-    if ($statistics) {
-      $variables['view_count'] = $statistics->getTotalCount();
+    try {
+      $statistics = \Drupal::service('statistics.storage.node')->fetchView($node->id());
+      if ($statistics) {
+        $variables['view_count'] = $statistics->getTotalCount();
+      }
+    }
+    catch (\Exception $e) {
+      // If statistics service fails, fallback to database query.
+      $database = \Drupal::database();
+      $query = $database->select('node_counter', 'nc')
+        ->fields('nc', ['totalcount'])
+        ->condition('nid', $node->id());
+      $result = $query->execute()->fetchField();
+      if ($result) {
+        $variables['view_count'] = $result;
+      }
     }
   }
 
@@ -259,14 +272,15 @@ function news_theme_preprocess_field(&$variables) {
 
     $variables['tag_colors'] = [];
     foreach ($variables['items'] as $delta => $item) {
-      if (isset($item['content']['#plain_text'])) {
+      if (isset($element['#items'][$delta])) {
         $tid = $element['#items'][$delta]->target_id;
         $term = Term::load($tid);
         if ($term) {
+          // Set URL and title for the tag link.
           $variables['items'][$delta]['content']['#url'] = Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $tid]);
           $variables['items'][$delta]['content']['#title'] = $term->getName();
 
-          // Assign a consistent random color based on term ID.
+          // Assign a consistent color based on term ID.
           $color_index = $tid % count($color_schemes);
           $variables['tag_colors'][$delta] = $color_schemes[$color_index];
         }

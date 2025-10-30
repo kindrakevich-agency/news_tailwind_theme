@@ -61,7 +61,7 @@
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>{{ reading_time }} {{ reading_time == 1 ? 'minute' : 'minutes' }}</span>
+                    <span>{{ reading_time }} {% if reading_time == 1 %}{{ 'minute'|t }}{% else %}{{ 'minutes'|t }}{% endif %}</span>
                 </div>
             {% endif %}
             <div class="flex items-center">
@@ -69,7 +69,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                 </svg>
-                <span>{{ view_count|default('0') }} views</span>
+                <span>{{ view_count|default('0') }} {{ 'views'|t }}</span>
             </div>
         </div>
     </div>
@@ -85,21 +85,21 @@
     <div class="flex items-center justify-center space-x-4 mt-12 pt-8 border-t border-gray-200">
         {% if prev_article %}
             <a href="{{ prev_article.url }}" class="px-6 py-2 text-sm text-gray-700 border border-gray-300 rounded-full hover:bg-gray-50 transition-colors">
-                ← Previous
+                ← {{ 'Previous'|t }}
             </a>
         {% else %}
             <button class="px-6 py-2 text-sm text-gray-400 border border-gray-200 rounded-full cursor-not-allowed" disabled>
-                ← Previous
+                ← {{ 'Previous'|t }}
             </button>
         {% endif %}
 
         {% if next_article %}
             <a href="{{ next_article.url }}" class="px-6 py-2 text-sm text-white bg-teal-600 rounded-full hover:bg-teal-700 transition-colors">
-                Next →
+                {{ 'Next'|t }} →
             </a>
         {% else %}
             <button class="px-6 py-2 text-sm text-gray-400 border border-gray-200 rounded-full cursor-not-allowed" disabled>
-                Next →
+                {{ 'Next'|t }} →
             </button>
         {% endif %}
     </div>
@@ -108,7 +108,7 @@
 <!-- Related Articles Section -->
 {% if related_articles|length > 0 %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h2 class="text-3xl font-bold text-gray-900 mb-8">You may also be interested</h2>
+        <h2 class="text-3xl font-bold text-gray-900 mb-8">{{ 'You may also be interested'|t }}</h2>
 
         <div class="masonry">
             {% for article in related_articles %}

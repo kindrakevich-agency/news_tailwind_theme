@@ -11,7 +11,11 @@
 #}
 {% if items %}
     {% for key, item in items %}
-        {% set colors = tag_colors[key] ?? {bg: 'bg-purple-100', text: 'text-purple-800', hover: 'hover:bg-purple-200'} %}
+        {% if tag_colors[key] %}
+            {% set colors = tag_colors[key] %}
+        {% else %}
+            {% set colors = {bg: 'bg-purple-100', text: 'text-purple-800', hover: 'hover:bg-purple-200'} %}
+        {% endif %}
         <a href="{{ item.content['#url'] }}"
            class="px-2 py-1 text-xs {{ colors.bg }} {{ colors.text }} rounded {{ colors.hover }} transition-colors inline-block">
             {{ item.content['#title']|upper }}
