@@ -71,6 +71,32 @@
                 </svg>
                 <span>{{ view_count|default('0') }} {{ 'views'|t }}</span>
             </div>
+
+            {# Share Button with Dropdown #}
+            <div class="relative share-dropdown-container">
+                <button class="share-button flex items-center px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 dark:text-white" data-url="{{ url }}" data-title="{{ label }}">
+                    {{ 'Share'|t }}
+                </button>
+                <div class="share-dropdown hidden absolute right-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                    <a href="#" class="share-facebook block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-md" data-url="{{ url }}">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                        </svg>
+                        {{ 'Facebook'|t }}
+                    </a>
+                    <a href="#" class="share-telegram block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-md" data-url="{{ url }}">
+                        <svg class="w-4 h-4 inline-block mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.68c.223-.198-.054-.308-.346-.11l-6.4 4.03-2.76-.918c-.6-.187-.612-.6.125-.89l10.782-4.156c.5-.18.943.11.78.89z"/>
+                        </svg>
+                        {{ 'Telegram'|t }}
+                    </a>
+                </div>
+            </div>
+
+            {# Collect Button #}
+            <button class="collect-button flex items-center px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600" data-nid="{{ node.id }}" data-collect-text="{{ 'Collect'|t }}" data-collected-text="{{ 'Collected'|t }}">
+                {{ 'Collect'|t }}
+            </button>
         </div>
     </div>
 
