@@ -155,6 +155,11 @@
     border-bottom: none !important;
 }
 
+/* Hide search form in main content area */
+#main-content .search-form {
+    display: none;
+}
+
 /* Global font weight - make all fonts bolder */
 body {
     font-weight: 500;

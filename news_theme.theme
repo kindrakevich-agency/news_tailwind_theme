@@ -200,8 +200,36 @@ function news_theme_preprocess_node(&$variables) {
   /** @var \Drupal\node\NodeInterface $node */
   $node = $variables['node'];
 
-  // Add author name.
-  $variables['author_name'] = $node->getOwner()->getDisplayName();
+  // Add author name and avatar.
+  $author = $node->getOwner();
+
+  // Check if user is anonymous.
+  if ($author->isAnonymous()) {
+    $variables['author_name'] = t('Anonymous');
+    $variables['author_avatar'] = NULL;
+    $variables['author_initial'] = 'A';
+  }
+  else {
+    $variables['author_name'] = $author->getDisplayName();
+
+    // Check if user has field_avatar field.
+    if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
+      $avatar_field = $author->get('field_avatar')->first();
+      if ($avatar_field && $avatar_field->entity) {
+        $variables['author_avatar'] = \Drupal::service('file_url_generator')->generateAbsoluteString($avatar_field->entity->getFileUri());
+      }
+      else {
+        $variables['author_avatar'] = NULL;
+      }
+    }
+    else {
+      $variables['author_avatar'] = NULL;
+    }
+
+    // Get first letter of author name for initial.
+    $name = $author->getDisplayName();
+    $variables['author_initial'] = mb_strtoupper(mb_substr($name, 0, 1));
+  }
 
   // Add formatted date.
   $variables['date'] = \Drupal::service('date.formatter')->format(

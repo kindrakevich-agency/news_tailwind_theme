@@ -29,6 +29,24 @@
     {% endif %}
 
     <div class="p-6">
+        {# Author and Action Buttons #}
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
+                {% if author_avatar %}
+                    <img src="{{ author_avatar }}" alt="{{ author_name }}" class="w-8 h-8 rounded-full object-cover">
+                {% else %}
+                    <div class="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">{{ author_initial }}</span>
+                    </div>
+                {% endif %}
+                <div class="text-sm font-semibold text-gray-900">{{ author_name }}</div>
+            </div>
+            <div class="flex space-x-2">
+                <button class="px-3 py-1 text-xs border border-gray-300 rounded-md hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">{{ 'Share'|t }}</button>
+                <button class="px-3 py-1 text-xs bg-gray-900 text-white rounded-md hover:bg-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600">{{ 'Collect'|t }}</button>
+            </div>
+        </div>
+
         {% if content.field_tags|render %}
             <div class="flex flex-wrap gap-2 mb-3">
                 {{ content.field_tags }}
