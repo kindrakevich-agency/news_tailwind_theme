@@ -15,7 +15,9 @@
     <div class="text-center mb-12">
         <p class="text-gray-500 uppercase tracking-widest text-sm mb-4">{{ newsletter_header|default('WELCOME TO BULETIN')|t }}</p>
         <h2 class="text-4xl md:text-5xl font-bold text-gray-900">
-            {{ latest_article.title }}
+            <a href="{{ latest_article.url }}" class="hover:text-teal-600 transition-colors">
+                {{ latest_article.title }}
+            </a>
         </h2>
     </div>
 
@@ -23,9 +25,9 @@
     <div class="bg-white rounded-3xl shadow-lg overflow-hidden max-w-5xl mx-auto">
         <div class="grid md:grid-cols-2 gap-0">
             <!-- Image Section -->
-            <div class="relative h-96 md:h-auto">
+            <div class="relative md:h-auto">
                 {% if featured_article.image %}
-                    <div class="absolute inset-0">
+                    <div class="absolute inset-0 newsletter-featured">
                         {{ featured_article.image }}
                     </div>
                 {% else %}
@@ -46,7 +48,7 @@
                 </div>
 
                 <!-- Title -->
-                <h3 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                <h3 class="text-3xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 leading-tight">
                     <a href="{{ featured_article.url }}" class="hover:text-teal-600 transition-colors">
                         {{ featured_article.title }}
                     </a>
