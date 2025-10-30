@@ -176,9 +176,29 @@ body[class*="path-search"] #main-content > h2 {
     color: inherit;
 }
 
+/* Collect button - unfilled heart when not collected */
+.collect-button:not(.collected) svg {
+    fill: none !important;
+}
+
 /* Collect button - filled heart when collected */
 .collect-button.collected svg {
-    fill: currentColor;
+    fill: currentColor !important;
+}
+
+/* Ensure icons are visible on hover in both light and dark modes */
+.share-button:hover svg,
+.collect-button:hover svg {
+    opacity: 1 !important;
+}
+
+/* Force collected button to be red with filled heart */
+.collect-button.collected {
+    color: #ef4444 !important;
+}
+
+.dark .collect-button.collected {
+    color: #ef4444 !important;
 }
 
 /* Global font weight - make all fonts bolder */
