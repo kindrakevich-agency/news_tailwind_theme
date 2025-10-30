@@ -1,0 +1,14 @@
+news_theme.favorites:
+  path: '/favorites'
+  defaults:
+    _controller: '\Drupal\news_theme\Controller\FavoritesController::content'
+    _title: 'Favorites'
+  requirements:
+    _access: 'TRUE'
+
+news_theme.favorites_api:
+  path: '/favorites/api'
+  defaults:
+    _controller: '\Drupal\news_theme\Controller\FavoritesController::api'
+  requirements:
+    _access: 'TRUE'
