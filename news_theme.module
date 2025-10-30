@@ -1,9 +1,0 @@
-<?php
-
-/**
- * @file
- * Contains theme-related functions for the News theme.
- */
-
-// This file can be used for additional theme functions if needed.
-// Controllers and routes are handled via the routing.yml file.

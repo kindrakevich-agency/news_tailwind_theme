@@ -161,9 +161,19 @@
 }
 
 /* Hide search result message h2 */
+.page-search #main-content h2,
 .search-results h2,
-.region-content > h2 {
-    display: none;
+.region-content .search-results h2 {
+    display: none !important;
+}
+
+/* Share button text color - must be black in light mode */
+.share-button {
+    color: #111827;
+}
+
+.dark .share-button {
+    color: #ffffff;
 }
 
 /* Global font weight - make all fonts bolder */
