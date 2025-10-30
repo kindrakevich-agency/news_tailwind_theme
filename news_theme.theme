@@ -11,6 +11,17 @@ use Drupal\Core\Url;
 use Drupal\node\Entity\Node;
 
 /**
+ * Implements hook_preprocess_html().
+ */
+function news_theme_preprocess_html(&$variables) {
+  // Add .page-search class to body on search pages
+  $route_name = \Drupal::routeMatch()->getRouteName();
+  if ($route_name === 'search.view_node_search' || strpos($route_name, 'search') !== FALSE) {
+    $variables['attributes']['class'][] = 'page-search';
+  }
+}
+
+/**
  * Implements hook_form_system_theme_settings_alter().
  */
 function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface $form_state) {
