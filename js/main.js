@@ -130,15 +130,10 @@
         }
       });
 
-      // Favorites icon click - show modal with favorites
+      // Favorites icon - update count badge
       const favoritesIcon = context.querySelector('#favorites-icon');
       if (favoritesIcon && !favoritesIcon.hasAttribute('data-favorites-initialized')) {
         favoritesIcon.setAttribute('data-favorites-initialized', 'true');
-
-        favoritesIcon.addEventListener('click', function(e) {
-          e.preventDefault();
-          showFavoritesModal();
-        });
 
         // Initial count update
         updateFavoritesCount();

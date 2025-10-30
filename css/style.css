@@ -280,6 +280,14 @@ strong, b {
     }
 }
 
+/* Remove top margin for main-content on frontpage mobile only */
+@media (max-width: 767px) {
+    body.path-frontpage #main-content {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+}
+
 .masonry-item {
     break-inside: avoid;
     margin-bottom: 1.5rem;
