@@ -160,6 +160,12 @@
     display: none;
 }
 
+/* Hide search result message h2 */
+.search-results h2,
+.region-content > h2 {
+    display: none;
+}
+
 /* Global font weight - make all fonts bolder */
 body {
     font-weight: 500;
