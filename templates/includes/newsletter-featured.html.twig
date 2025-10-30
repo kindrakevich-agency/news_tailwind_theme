@@ -39,9 +39,13 @@
             <div class="p-8 md:p-12 flex flex-col justify-center">
                 <!-- Source and Time -->
                 <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
-                        <span class="text-white font-bold text-xl">{{ featured_article.author_initial }}</span>
-                    </div>
+                    {% if featured_article.author_avatar %}
+                        <img src="{{ featured_article.author_avatar }}" alt="{{ featured_article.author_name }}" class="w-10 h-10 rounded-full object-cover">
+                    {% else %}
+                        <div class="w-10 h-10 bg-teal-600 rounded-full flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">{{ featured_article.author_initial }}</span>
+                        </div>
+                    {% endif %}
                     <span class="text-gray-900 font-medium">{{ featured_article.author_name }}</span>
                     <span class="text-gray-400">•</span>
                     <span class="text-gray-500">{{ featured_article.time_ago }}</span>
