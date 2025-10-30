@@ -82,6 +82,56 @@
     color: #93c5fd;
 }
 
+/* Dark mode - Logo must be white */
+.dark header a {
+    color: #ffffff !important;
+}
+
+/* Dark mode - Tags must have white text on colored backgrounds, black text on light backgrounds */
+.dark .field--name-field-tags a,
+.dark [class*="bg-"][class*="-100"] {
+    color: #000000 !important;
+}
+
+/* Dark mode - Buttons must have white text */
+.dark button,
+.dark .btn {
+    color: #ffffff;
+}
+
+.dark button:disabled {
+    color: #6b7280;
+}
+
+/* Dark mode - Article title must have no background */
+.dark article h1,
+.dark article h2,
+.dark article h3 {
+    background-color: transparent !important;
+    color: #ffffff !important;
+}
+
+/* Dark mode - Article body text, h2, ul, first p must be white */
+.dark .article-body,
+.dark .article-body p,
+.dark .article-body h2,
+.dark .article-body ul,
+.dark .article-body ol,
+.dark .article-body li {
+    color: #ffffff !important;
+}
+
+.dark .article-body > p:first-of-type {
+    color: #ffffff !important;
+}
+
+/* Dark mode - Navigation buttons text must be white */
+.dark a[class*="text-gray"],
+.dark a[class*="text-white"],
+.dark button[class*="text-gray"] {
+    color: #ffffff !important;
+}
+
 /* Global font weight - make all fonts bolder */
 body {
     font-weight: 500;
