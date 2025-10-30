@@ -170,35 +170,73 @@ body[class*="path-search"] #main-content > h2 {
     display: none !important;
 }
 
-/* Share and Collect button icon colors */
-.share-button svg,
-.collect-button svg {
-    color: inherit;
+/* Share button - base styles */
+.share-button {
+    color: #4b5563 !important; /* gray-600 */
+}
+
+.share-button:hover {
+    color: #111827 !important; /* gray-900 */
+}
+
+.dark .share-button {
+    color: #9ca3af !important; /* gray-400 */
+}
+
+.dark .share-button:hover {
+    color: #f9fafb !important; /* gray-50 */
+}
+
+/* Collect button - not collected */
+.collect-button {
+    color: #4b5563 !important; /* gray-600 */
+}
+
+.collect-button:hover {
+    color: #111827 !important; /* gray-900 */
+}
+
+.dark .collect-button {
+    color: #9ca3af !important; /* gray-400 */
+}
+
+.dark .collect-button:hover {
+    color: #f9fafb !important; /* gray-50 */
 }
 
 /* Collect button - unfilled heart when not collected */
 .collect-button:not(.collected) svg {
     fill: none !important;
+    stroke: currentColor !important;
 }
 
 /* Collect button - filled heart when collected */
-.collect-button.collected svg {
-    fill: currentColor !important;
-}
-
-/* Ensure icons are visible on hover in both light and dark modes */
-.share-button:hover svg,
-.collect-button:hover svg {
-    opacity: 1 !important;
-}
-
-/* Force collected button to be red with filled heart */
 .collect-button.collected {
-    color: #ef4444 !important;
+    color: #ef4444 !important; /* red-500 */
+}
+
+.collect-button.collected:hover {
+    color: #dc2626 !important; /* red-600 */
 }
 
 .dark .collect-button.collected {
-    color: #ef4444 !important;
+    color: #ef4444 !important; /* red-500 */
+}
+
+.dark .collect-button.collected:hover {
+    color: #dc2626 !important; /* red-600 */
+}
+
+.collect-button.collected svg {
+    fill: currentColor !important;
+    stroke: currentColor !important;
+}
+
+/* Ensure SVG icons are visible */
+.share-button svg,
+.collect-button svg {
+    display: block !important;
+    opacity: 1 !important;
 }
 
 /* Global font weight - make all fonts bolder */
