@@ -132,6 +132,29 @@
     color: #ffffff !important;
 }
 
+/* Dark mode - Article body strong and b tags must be white */
+.dark .article-body strong,
+.dark .article-body b {
+    color: #ffffff !important;
+}
+
+/* Dark mode - All heading tags must be white */
+.dark .article-body h1,
+.dark .article-body h2,
+.dark .article-body h3,
+.dark .article-body h4,
+.dark .article-body h5,
+.dark .article-body h6 {
+    color: #ffffff !important;
+}
+
+/* Dark mode - Header in article must be transparent without border */
+.dark article header,
+.dark .node--type-article header {
+    background-color: transparent !important;
+    border-bottom: none !important;
+}
+
 /* Global font weight - make all fonts bolder */
 body {
     font-weight: 500;
