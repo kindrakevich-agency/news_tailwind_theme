@@ -573,7 +573,7 @@ function _news_theme_get_newsletter_articles() {
   $nids = $query->execute();
 
   if (count($nids) >= 2) {
-    $nodes = Node::load_multiple($nids);
+    $nodes = Node::loadMultiple($nids);
     $nodes = array_values($nodes);
 
     // First article (latest) - for the tagline.
