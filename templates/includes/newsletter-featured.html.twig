@@ -27,9 +27,9 @@
             <!-- Image Section -->
             <div class="relative h-64 md:h-auto">
                 {% if featured_article.image %}
-                    <div class="absolute inset-0 newsletter-featured">
+                    <a href="{{ featured_article.url }}" class="absolute inset-0 newsletter-featured">
                         {{ featured_article.image }}
-                    </div>
+                    </a>
                 {% else %}
                     <div class="absolute inset-0 bg-gradient-to-b from-teal-400 to-teal-600"></div>
                 {% endif %}

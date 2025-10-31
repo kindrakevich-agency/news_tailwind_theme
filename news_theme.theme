@@ -360,12 +360,27 @@ function _news_theme_load_tags() {
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
+  // Count nodes for each term and prepare array.
   foreach ($terms as $term) {
+    // Count published article nodes tagged with this term.
+    $query = \Drupal::entityQuery('node')
+      ->condition('type', 'article')
+      ->condition('status', 1)
+      ->condition('field_tags', $term->id())
+      ->accessCheck(TRUE);
+    $count = $query->count()->execute();
+
     $tags[] = [
       'id' => $term->id(),
       'name' => $term->getName(),
+      'count' => $count,
     ];
   }
+
+  // Sort by count descending.
+  usort($tags, function($a, $b) {
+    return $b['count'] - $a['count'];
+  });
 
   return $tags;
 }
@@ -562,6 +577,69 @@ function news_theme_preprocess_search_result(&$variables) {
           'link' => TRUE,
         ],
       ]);
+    }
+
+    // Add author information.
+    $author = $node->getOwner();
+    if ($author->isAnonymous()) {
+      $variables['author_name'] = t('Anonymous');
+      $variables['author_avatar'] = NULL;
+      $variables['author_initial'] = 'A';
+    }
+    else {
+      $variables['author_name'] = $author->getDisplayName();
+
+      // Check if user has field_avatar field.
+      if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
+        $avatar_field = $author->get('field_avatar')->first();
+        if ($avatar_field && $avatar_field->entity) {
+          $variables['author_avatar'] = \Drupal::service('file_url_generator')->generateAbsoluteString($avatar_field->entity->getFileUri());
+        }
+        else {
+          $variables['author_avatar'] = NULL;
+        }
+      }
+      else {
+        $variables['author_avatar'] = NULL;
+      }
+
+      // Get first letter of author name for initial.
+      $name = $author->getDisplayName();
+      $variables['author_initial'] = mb_strtoupper(mb_substr($name, 0, 1));
+    }
+
+    // Get view count from statistics module if available.
+    $variables['view_count'] = 0;
+    if (\Drupal::moduleHandler()->moduleExists('statistics')) {
+      $database = \Drupal::database();
+      try {
+        if ($database->schema()->tableExists('node_counter')) {
+          $query = $database->select('node_counter', 'nc')
+            ->fields('nc', ['totalcount'])
+            ->condition('nid', $node->id());
+          $result = $query->execute()->fetchField();
+          if ($result !== FALSE) {
+            $variables['view_count'] = (int) $result;
+          }
+        }
+      }
+      catch (\Exception $e) {
+        \Drupal::logger('news_theme')->error('Error fetching view count: @message', ['@message' => $e->getMessage()]);
+      }
+    }
+
+    // Add node ID for collect button.
+    $variables['node_id'] = $node->id();
+
+    // Add longer body text excerpt.
+    if ($node->hasField('body') && !$node->get('body')->isEmpty()) {
+      $body_value = $node->get('body')->value;
+      $plain_text = strip_tags($body_value);
+      // Increase to 300 characters (from 200).
+      if (mb_strlen($plain_text) > 300) {
+        $plain_text = mb_substr($plain_text, 0, 300) . '...';
+      }
+      $variables['body_excerpt'] = $plain_text;
     }
   }
 }
