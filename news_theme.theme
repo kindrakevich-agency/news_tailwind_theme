@@ -392,11 +392,23 @@ function _news_theme_get_main_menu_items() {
   ];
   $tree = $menu_tree->transform($tree, $manipulators);
 
+  $current_path = \Drupal::service('path.current')->getPath();
+  $current_url = Url::fromUserInput($current_path)->toString();
+
   $menu_items = [];
   foreach ($tree as $element) {
+    $url_object = $element->link->getUrlObject();
+    $is_active = FALSE;
+
+    // Check if this menu item is active.
+    if ($url_object->toString() === $current_url) {
+      $is_active = TRUE;
+    }
+
     $menu_items[] = [
       'title' => $element->link->getTitle(),
-      'url' => $element->link->getUrlObject(),
+      'url' => $url_object,
+      'is_active' => $is_active,
     ];
   }
 

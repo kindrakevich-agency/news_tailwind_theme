@@ -13,6 +13,7 @@
 <head>
     <head-placeholder token="{{ placeholder_token }}">
     <title>{{ head_title|safe_join(' | ') }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/dist/tailwind.min.css" rel="stylesheet">
     <css-placeholder token="{{ placeholder_token }}">
     <js-placeholder token="{{ placeholder_token }}">
 </head>
@@ -30,7 +31,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
             <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
                 {% for item in main_menu_items %}
-                    <a href="{{ item.url }}" class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
+                    <a href="{{ item.url }}" class="px-4 py-2 {{ item.is_active ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700' }} text-sm rounded-full border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
                         {{ item.title }}
                     </a>
                 {% endfor %}

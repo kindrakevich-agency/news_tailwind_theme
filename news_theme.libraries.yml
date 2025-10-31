@@ -4,7 +4,6 @@ global:
     theme:
       css/style.css: {}
   js:
-    https://cdn.tailwindcss.com: { type: external, minified: true }
     js/main.js: {}
   dependencies:
     - core/drupal
