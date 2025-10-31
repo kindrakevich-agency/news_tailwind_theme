@@ -25,10 +25,23 @@ function news_theme_preprocess_html(&$variables) {
  * Implements hook_form_system_theme_settings_alter().
  */
 function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface $form_state) {
+  $form['header_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Header Settings'),
+    '#open' => TRUE,
+  ];
+
+  $form['header_settings']['header_site_name'] = [
+    '#type' => 'textfield',
+    '#title' => t('Header Site Name'),
+    '#default_value' => theme_get_setting('header_site_name') ?: 'Polissya.today',
+    '#description' => t('The site name displayed in the header. Leave empty to use the site name from Basic site settings.'),
+  ];
+
   $form['footer_settings'] = [
     '#type' => 'details',
     '#title' => t('Footer Settings'),
-    '#open' => TRUE,
+    '#open' => FALSE,
   ];
 
   $form['footer_settings']['footer_site_name'] = [
@@ -139,21 +152,11 @@ function news_theme_preprocess_page(&$variables) {
   $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
   $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
 
-  // Load main menu for footer.
-  $menu_tree = \Drupal::menuTree();
-  $menu_name = 'main';
-  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
-  $parameters->setMaxDepth(1);
-  $tree = $menu_tree->load($menu_name, $parameters);
-  $manipulators = [
-    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
-    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
-  ];
-  $tree = $menu_tree->transform($tree, $manipulators);
-  $variables['footer_menu'] = $menu_tree->build($tree);
-
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Load header settings.
+  $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
 
   // Load newsletter settings and featured articles for frontpage.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
@@ -187,21 +190,11 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
   $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
   $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
 
-  // Load main menu for footer.
-  $menu_tree = \Drupal::menuTree();
-  $menu_name = 'main';
-  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
-  $parameters->setMaxDepth(1);
-  $tree = $menu_tree->load($menu_name, $parameters);
-  $manipulators = [
-    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
-    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
-  ];
-  $tree = $menu_tree->transform($tree, $manipulators);
-  $variables['footer_menu'] = $menu_tree->build($tree);
-
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Load header settings.
+  $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
 }
 
 /**

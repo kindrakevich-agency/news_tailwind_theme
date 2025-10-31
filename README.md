@@ -47,7 +47,23 @@ A modern, responsive news website theme built with Tailwind CSS for Drupal 11.
 
 ## Configuration
 
-### 1. Content Type Setup
+### 1. Theme Settings
+
+Configure the theme appearance via: **Appearance → Settings → News Theme**
+
+**Header Settings:**
+- **Header Site Name**: The site name displayed in the header. Leave empty to use the site name from Basic site settings.
+
+**Footer Settings:**
+- **Footer Site Name**: The site name displayed in the footer.
+- **Footer Description**: The description text displayed in the footer.
+- **Footer Email**: Contact email address (text hidden on mobile, only icon visible).
+- **Social Media Links**: URLs for Facebook, Twitter, Instagram, YouTube, GitHub, and Medium.
+
+**Newsletter/Featured Block Settings:**
+- **Newsletter Header Text**: The header text displayed above the featured article section on the homepage.
+
+### 2. Content Type Setup
 
 Ensure your Article content type has these fields:
 
@@ -61,11 +77,11 @@ Ensure your Article content type has these fields:
 
 - **body**: Text (formatted, long, with summary)
 
-### 2. Taxonomy Vocabulary
+### 3. Taxonomy Vocabulary
 
 Create a taxonomy vocabulary called "tags" (machine name: `tags`) and add terms for your categories (e.g., Politics, Business, Technology, Health, etc.)
 
-### 3. Automatic Views (No Manual Configuration Needed!)
+### 4. Automatic Views (No Manual Configuration Needed!)
 
 The theme automatically installs two pre-configured views when enabled:
 
@@ -88,7 +104,7 @@ The theme automatically installs two pre-configured views when enabled:
 
 **These views are pre-configured and ready to use!** No manual view creation needed.
 
-### 4. Display Modes
+### 5. Display Modes
 
 Configure the Article teaser display mode:
 
@@ -136,15 +152,18 @@ news_theme/
 
 ### Changing Site Name
 
-Edit `templates/includes/header-menu.html.twig` and change "NewsHub" to your site name.
+You can configure the site name in two ways:
+1. **Theme Settings**: Go to Appearance → Settings → News Theme → Header Settings
+2. **Basic Site Settings**: Go to Configuration → System → Basic site settings (will be used if theme setting is empty)
 
 ### Changing Footer Content
 
-Edit `templates/includes/footer.html.twig` to update:
-- Site name and description
-- Footer menu links
-- Social media links
-- Email address
+Configure footer settings via: **Appearance → Settings → News Theme → Footer Settings**
+
+You can customize:
+- Footer site name and description
+- Social media links (Facebook, Twitter, Instagram, YouTube, GitHub, Medium)
+- Contact email address
 
 ### Styling
 
@@ -183,6 +202,30 @@ Tag colors can be customized in `templates/field--field-tags.html.twig`. Availab
 - **header-menu.html.twig**: Site logo and search form
 - **header-tags.html.twig**: Horizontal scrolling taxonomy navigation
 - **footer.html.twig**: Footer with social links and navigation
+
+## Domain Module Compatibility
+
+This theme is fully compatible with the **Domain** module for multi-site installations:
+
+- **Domain-aware URLs**: All URLs use Drupal's path() and url() functions, ensuring proper domain routing
+- **Dynamic Site Names**: The header site name automatically uses the current domain's site name from configuration
+- **No Hardcoded URLs**: All links are generated dynamically, respecting the active domain
+- **Shared Configuration**: Footer settings and other theme configurations work across all domains
+
+To use with Domain module:
+1. Install and configure the Domain module
+2. Set up domain-specific site names via Configuration → System → Basic site settings (per domain)
+3. Optionally override site names via theme settings for each domain
+
+## Mobile Optimizations
+
+The theme includes several mobile-specific optimizations:
+
+- **Responsive Header**: Login icon hidden on mobile devices for cleaner navigation
+- **Mobile-friendly Footer**: Email text hidden on mobile (icon remains visible)
+- **Optimized Newsletter Block**: Mobile-specific padding and font sizes matching the news list layout
+- **Active Menu States**: Menu items show active state with gray background for better navigation
+- **Sticky Header**: Header remains fixed at the top on all devices
 
 ## Troubleshooting
 
