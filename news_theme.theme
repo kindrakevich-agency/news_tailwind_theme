@@ -672,6 +672,10 @@ function news_theme_preprocess_search_result(&$variables) {
       }
       $variables['body_excerpt'] = $plain_text;
     }
+
+    // Add formatted date without author information for footer.
+    $created = $node->getCreatedTime();
+    $variables['date'] = \Drupal::service('date.formatter')->format($created, 'custom', 'F j, Y');
   }
 }
 

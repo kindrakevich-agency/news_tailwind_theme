@@ -33,6 +33,20 @@
     {% endif %}
 
     <div class="p-6 flex-1 flex flex-col">
+        {# Author Info #}
+        {% if author_name %}
+            <div class="flex items-center space-x-2 mb-4">
+                {% if author_avatar %}
+                    <img src="{{ author_avatar }}" alt="{{ author_name }}" class="w-8 h-8 rounded-full object-cover">
+                {% else %}
+                    <div class="w-8 h-8 bg-teal-600 rounded-full flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">{{ author_initial }}</span>
+                    </div>
+                {% endif %}
+                <div class="text-sm font-semibold text-gray-900">{{ author_name }}</div>
+            </div>
+        {% endif %}
+
         {# Action Buttons #}
         <div class="flex items-center justify-end mb-4">
             <div class="flex space-x-2">
@@ -96,7 +110,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
             </svg>
-            <span>{{ view_count|default('0') }} {{ 'views'|t }}{% if info %} · {{ info }}{% endif %}</span>
+            <span>{{ view_count|default('0') }} {{ 'views'|t }}{% if date %} · {{ date }}{% endif %}</span>
         </div>
     </div>
 </article>
