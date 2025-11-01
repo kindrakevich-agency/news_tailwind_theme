@@ -29,7 +29,7 @@
         {% if items.pages %}
             {% for key, item in items.pages %}
                 {% if current == key %}
-                    <span class="px-4 py-2 bg-gray-900 text-white rounded-md font-semibold">{{ key }}</span>
+                    <span class="px-4 py-2 bg-gray-900 text-white dark:bg-white dark:text-black rounded-md font-semibold">{{ key }}</span>
                 {% else %}
                     <a href="{{ item.href }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">{{ key }}</a>
                 {% endif %}
