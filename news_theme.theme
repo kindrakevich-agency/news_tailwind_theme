@@ -163,6 +163,9 @@ function news_theme_preprocess_page(&$variables) {
     $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
     $variables['newsletter_data'] = _news_theme_get_newsletter_articles();
   }
+
+  // Load exchange rates (cached for 3 hours).
+  $variables['exchange_rates'] = _news_theme_get_exchange_rates();
 }
 
 /**
@@ -195,6 +198,9 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
+
+  // Load exchange rates (cached for 3 hours).
+  $variables['exchange_rates'] = _news_theme_get_exchange_rates();
 }
 
 /**
@@ -854,4 +860,56 @@ function _news_theme_time_ago($timestamp) {
     $days = floor($time_ago / 86400);
     return t('@count days ago', ['@count' => $days]);
   }
+}
+
+/**
+ * Helper function to get exchange rates for UAH.
+ *
+ * Fetches UAH exchange rates from a free API and caches for 3 hours.
+ *
+ * @return array
+ *   Array of exchange rates with currency codes as keys.
+ */
+function _news_theme_get_exchange_rates() {
+  $cache_key = 'news_theme:exchange_rates';
+  $cache = \Drupal::cache()->get($cache_key);
+
+  if ($cache && !empty($cache->data)) {
+    return $cache->data;
+  }
+
+  // Currencies to display: EUR, USD, PLN, GBP, MDL, CZK, CHF, DKK, NOK
+  $currencies = ['EUR', 'USD', 'PLN', 'GBP', 'MDL', 'CZK', 'CHF', 'DKK', 'NOK'];
+  $rates = [];
+
+  try {
+    // Use exchangerate-api.com free API (no key required)
+    $url = 'https://api.exchangerate-api.com/v4/latest/UAH';
+    $response = \Drupal::httpClient()->get($url, ['timeout' => 5]);
+
+    if ($response->getStatusCode() == 200) {
+      $data = json_decode($response->getBody(), TRUE);
+
+      if (!empty($data['rates'])) {
+        foreach ($currencies as $currency) {
+          if (isset($data['rates'][$currency])) {
+            $rates[$currency] = [
+              'code' => $currency,
+              'rate' => number_format($data['rates'][$currency], 2),
+            ];
+          }
+        }
+      }
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('news_theme')->error('Error fetching exchange rates: @message', ['@message' => $e->getMessage()]);
+  }
+
+  // Cache for 3 hours (10800 seconds)
+  if (!empty($rates)) {
+    \Drupal::cache()->set($cache_key, $rates, time() + 10800);
+  }
+
+  return $rates;
 }
