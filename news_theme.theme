@@ -198,9 +198,6 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
-
-  // Load exchange rates (cached for 3 hours).
-  $variables['exchange_rates'] = _news_theme_get_exchange_rates();
 }
 
 /**
@@ -892,10 +889,12 @@ function _news_theme_get_exchange_rates() {
 
       if (!empty($data['rates'])) {
         foreach ($currencies as $currency) {
-          if (isset($data['rates'][$currency])) {
+          if (isset($data['rates'][$currency]) && $data['rates'][$currency] > 0) {
+            // Invert the rate to show how many UAH for 1 unit of foreign currency
+            $inverted_rate = 1 / $data['rates'][$currency];
             $rates[$currency] = [
               'code' => $currency,
-              'rate' => number_format($data['rates'][$currency], 2),
+              'rate' => number_format($inverted_rate, 2),
             ];
           }
         }
@@ -906,9 +905,10 @@ function _news_theme_get_exchange_rates() {
     \Drupal::logger('news_theme')->error('Error fetching exchange rates: @message', ['@message' => $e->getMessage()]);
   }
 
-  // Cache for 3 hours (10800 seconds)
+  // Cache for 3 hours (10800 seconds).
+  // This cache will be automatically cleared when Drupal cache is cleared.
   if (!empty($rates)) {
-    \Drupal::cache()->set($cache_key, $rates, time() + 10800);
+    \Drupal::cache()->set($cache_key, $rates, \Drupal::time()->getRequestTime() + 10800);
   }
 
   return $rates;

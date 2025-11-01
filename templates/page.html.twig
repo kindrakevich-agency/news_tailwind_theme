@@ -22,11 +22,6 @@
     {% include '@news_theme/includes/header-menu.html.twig' %}
     {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': null} %}
 
-    <!-- Exchange Rates -->
-    {% include '@news_theme/includes/exchange-rates.html.twig' with {
-        'exchange_rates': exchange_rates
-    } %}
-
     <div id="main-content">
         {{ page.content }}
     </div>

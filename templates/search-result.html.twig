@@ -33,9 +33,9 @@
     {% endif %}
 
     <div class="p-6 flex-1 flex flex-col">
-        {# Author Info #}
-        {% if author_name %}
-            <div class="flex items-center space-x-2 mb-4">
+        {# Author and Action Buttons #}
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-2">
                 {% if author_avatar %}
                     <img src="{{ author_avatar }}" alt="{{ author_name }}" class="w-8 h-8 rounded-full object-cover">
                 {% else %}
@@ -45,10 +45,6 @@
                 {% endif %}
                 <div class="text-sm font-semibold text-gray-900">{{ author_name }}</div>
             </div>
-        {% endif %}
-
-        {# Action Buttons #}
-        <div class="flex items-center justify-end mb-4">
             <div class="flex space-x-2">
                 {# Share Button with Dropdown #}
                 <div class="relative share-dropdown-container">
