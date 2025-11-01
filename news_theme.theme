@@ -250,6 +250,37 @@ function news_theme_preprocess_node(&$variables) {
     $variables['reading_time'] = $reading_time;
   }
 
+  // Clean up body field for full view mode.
+  if ($variables['view_mode'] == 'full' && $node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body_value = $node->get('body')->value;
+
+    // Get field_image filenames to remove from body.
+    $image_filenames = [];
+    if ($node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
+      foreach ($node->get('field_image') as $image_item) {
+        if ($image_item->entity) {
+          $image_filenames[] = $image_item->entity->getFilename();
+        }
+      }
+    }
+
+    // Remove images that match field_image filenames.
+    if (!empty($image_filenames)) {
+      foreach ($image_filenames as $filename) {
+        // Remove img tags containing this filename.
+        $pattern = '/<img[^>]*' . preg_quote($filename, '/') . '[^>]*>/i';
+        $body_value = preg_replace($pattern, '', $body_value);
+      }
+    }
+
+    // Remove empty img tags (without src or with empty src).
+    $body_value = preg_replace('/<img[^>]*src\s*=\s*["\']?\s*["\']?[^>]*>/i', '', $body_value);
+    $body_value = preg_replace('/<img(?![^>]*src=)[^>]*>/i', '', $body_value);
+
+    // Update the body field with cleaned content.
+    $variables['content']['body'][0]['#text'] = $body_value;
+  }
+
   // Get view count from statistics module if available.
   $variables['view_count'] = 0;
   if (\Drupal::moduleHandler()->moduleExists('statistics')) {
