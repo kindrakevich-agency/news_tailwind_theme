@@ -54,6 +54,11 @@
         'exchange_rates': exchange_rates
     } %}
 
+    <!-- Top News by Category -->
+    {% include '@news_theme/includes/top-news-by-category.html.twig' with {
+        'top_news_by_category': top_news_by_category
+    } %}
+
     <!-- Main Content Grid -->
     <div id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-0 md:mt-8">
         {{ page.content }}
