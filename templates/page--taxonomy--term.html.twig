@@ -13,6 +13,7 @@
 <head>
     <head-placeholder token="{{ placeholder_token }}">
     <title>{{ head_title|safe_join(' | ') }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <css-placeholder token="{{ placeholder_token }}">
     <js-placeholder token="{{ placeholder_token }}">
 </head>
@@ -27,10 +28,11 @@
 
     <!-- Filter Buttons - Main Menu -->
     {% if main_menu_items %}
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="max-w-7xl mx-auto mt-6">
             <div class="flex space-x-2 overflow-x-auto scrollbar-hide">
                 {% for item in main_menu_items %}
-                    <a href="{{ item.url }}" class="px-4 py-2 bg-white text-gray-700 text-sm rounded-full border border-gray-300 hover:bg-gray-50 whitespace-nowrap">
+                    {% set is_first = loop.first %}
+                    <a href="{{ item.url }}" class="px-4 py-2 {{ item.is_active ? 'bg-gray-200 text-gray-900' : 'bg-white text-gray-700' }} text-sm rounded-full border border-gray-300 hover:bg-gray-50 whitespace-nowrap {{ is_first ? 'ml-4' : '' }}">
                         {{ item.title }}
                     </a>
                 {% endfor %}

@@ -10,11 +10,11 @@
  */
 #}
 {% if latest_article and featured_article %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8 md:pb-12">
     <!-- Header -->
     <div class="text-center mb-12">
         <p class="text-gray-500 uppercase tracking-widest text-sm mb-4">{{ newsletter_header|default('WELCOME TO BULETIN')|t }}</p>
-        <h2 class="text-2xl md:text-5xl font-bold text-gray-900">
+        <h2 class="text-2xl md:text-[2.4rem] md:leading-[2.8rem] font-bold text-gray-900">
             <a href="{{ latest_article.url }}" class="hover:text-teal-600 transition-colors">
                 {{ latest_article.title }}
             </a>
@@ -27,16 +27,16 @@
             <!-- Image Section -->
             <div class="relative h-64 md:h-auto">
                 {% if featured_article.image %}
-                    <div class="absolute inset-0 newsletter-featured">
+                    <a href="{{ featured_article.url }}" class="absolute inset-0 newsletter-featured">
                         {{ featured_article.image }}
-                    </div>
+                    </a>
                 {% else %}
                     <div class="absolute inset-0 bg-gradient-to-b from-teal-400 to-teal-600"></div>
                 {% endif %}
             </div>
 
             <!-- Content Section -->
-            <div class="p-8 md:p-12 flex flex-col justify-center">
+            <div class="p-6 flex flex-col justify-center">
                 <!-- Source and Time -->
                 <div class="flex items-center gap-3 mb-6">
                     {% if featured_article.author_avatar %}
@@ -52,25 +52,16 @@
                 </div>
 
                 <!-- Title -->
-                <h3 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-6 leading-tight">
+                <h3 class="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 md:mb-4 leading-tight">
                     <a href="{{ featured_article.url }}" class="hover:text-teal-600 transition-colors">
                         {{ featured_article.title }}
                     </a>
                 </h3>
 
                 <!-- Description -->
-                <p class="text-gray-600 text-lg mb-6 leading-relaxed">
+                <p class="text-gray-600 text-[1.3rem] md:text-[1rem] md:leading-[1.6rem] leading-relaxed">
                     {{ featured_article.excerpt }}
                 </p>
-
-                <!-- Meta Info -->
-                <div class="flex items-center gap-3 text-gray-500">
-                    {% if featured_article.tags %}
-                        <span class="text-teal-600 font-medium">{{ featured_article.tags }}</span>
-                        <span>•</span>
-                    {% endif %}
-                    <span>{{ featured_article.reading_time }} {{ 'min read'|t }}</span>
-                </div>
             </div>
         </div>
     </div>

@@ -8,23 +8,12 @@
 <footer class="bg-gray-100 mt-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <!-- Footer Header -->
-        <div class="text-center mb-8">
+        <div class="text-center mb-12">
             <h2 class="text-4xl font-bold text-gray-900 mb-6 tracking-wide">{{ footer_site_name|default('Polissya.today') }}</h2>
             <p class="text-gray-600 max-w-3xl mx-auto leading-relaxed">
                 {{ footer_description|default('Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.') }}
             </p>
         </div>
-
-        <!-- Footer Navigation - Main Menu -->
-        {% if footer_menu %}
-            <nav class="flex justify-center space-x-12 mb-12 mt-12 flex-wrap gap-y-4">
-                {{ footer_menu }}
-            </nav>
-        {% else %}
-            <nav class="flex justify-center space-x-12 mb-12 mt-12">
-                <a href="{{ path('<front>') }}" class="text-gray-900 font-semibold hover:text-gray-600 transition-colors">HOME</a>
-            </nav>
-        {% endif %}
 
         <!-- Social Media and Email -->
         <div class="flex items-center justify-center space-x-8 flex-wrap gap-y-4">
@@ -76,12 +65,12 @@
 
             <!-- Email -->
             {% if footer_email %}
-                <div class="flex items-center space-x-3 ml-0 sm:ml-12">
+                <a href="mailto:{{ footer_email }}" class="flex items-center space-x-3 ml-0 sm:ml-12 hover:text-gray-600 transition-colors">
                     <svg class="w-6 h-6 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
-                    <span class="text-gray-900 font-semibold">{{ footer_email }}</span>
-                </div>
+                    <span class="hidden sm:inline text-gray-900 font-semibold">{{ footer_email }}</span>
+                </a>
             {% endif %}
         </div>
     </div>

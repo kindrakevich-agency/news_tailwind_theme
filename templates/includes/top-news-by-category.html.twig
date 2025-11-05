@@ -1,0 +1,26 @@
+{#
+/**
+ * @file
+ * Theme implementation for top news by category.
+ *
+ * Available variables:
+ * - top_news_by_category: Array of articles with their category names.
+ */
+#}
+{% if top_news_by_category %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-6">
+        {% for column in top_news_by_category|batch(5) %}
+            <div class="bg-white rounded-none lg:rounded-lg shadow-sm p-6 space-y-4">
+                {% for article in column %}
+                    <div>
+                        <a href="{{ article.url }}" class="text-sm text-gray-700 hover:text-teal-600 transition-colors line-clamp-2 block">
+                            {{ article.title }}. <span class="text-teal-600 font-medium">{{ article.category_name }}</span>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

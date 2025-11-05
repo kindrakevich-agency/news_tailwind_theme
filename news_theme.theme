@@ -25,10 +25,23 @@ function news_theme_preprocess_html(&$variables) {
  * Implements hook_form_system_theme_settings_alter().
  */
 function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface $form_state) {
+  $form['header_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Header Settings'),
+    '#open' => TRUE,
+  ];
+
+  $form['header_settings']['header_site_name'] = [
+    '#type' => 'textfield',
+    '#title' => t('Header Site Name'),
+    '#default_value' => theme_get_setting('header_site_name') ?: 'Polissya.today',
+    '#description' => t('The site name displayed in the header. Leave empty to use the site name from Basic site settings.'),
+  ];
+
   $form['footer_settings'] = [
     '#type' => 'details',
     '#title' => t('Footer Settings'),
-    '#open' => TRUE,
+    '#open' => FALSE,
   ];
 
   $form['footer_settings']['footer_site_name'] = [
@@ -114,6 +127,10 @@ function news_theme_preprocess_page(&$variables) {
   // Load tags from taxonomy vocabulary for header navigation.
   $variables['tags'] = _news_theme_load_tags();
 
+  // Check if current user is admin.
+  $current_user = \Drupal::currentUser();
+  $variables['is_admin'] = $current_user->hasPermission('administer site configuration');
+
   // Get search query from request for search field.
   $request = \Drupal::request();
   $variables['search_query'] = $request->query->get('keys') ?: '';
@@ -139,26 +156,24 @@ function news_theme_preprocess_page(&$variables) {
   $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
   $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
 
-  // Load main menu for footer.
-  $menu_tree = \Drupal::menuTree();
-  $menu_name = 'main';
-  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
-  $parameters->setMaxDepth(1);
-  $tree = $menu_tree->load($menu_name, $parameters);
-  $manipulators = [
-    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
-    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
-  ];
-  $tree = $menu_tree->transform($tree, $manipulators);
-  $variables['footer_menu'] = $menu_tree->build($tree);
-
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Add cache context for domain if domain module is enabled.
+  // This ensures the menu is re-rendered when switching between domains.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $variables['#cache']['contexts'][] = 'url.site';
+  }
+
+  // Load header settings.
+  $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
 
   // Load newsletter settings and featured articles for frontpage.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
     $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
     $variables['newsletter_data'] = _news_theme_get_newsletter_articles();
+    $variables['exchange_rates'] = _news_theme_get_exchange_rates();
+    $variables['top_news_by_category'] = _news_theme_get_top_news_by_category();
   }
 }
 
@@ -168,6 +183,10 @@ function news_theme_preprocess_page(&$variables) {
 function news_theme_preprocess_taxonomy_term(&$variables) {
   // Load tags from taxonomy vocabulary for header navigation.
   $variables['tags'] = _news_theme_load_tags();
+
+  // Check if current user is admin.
+  $current_user = \Drupal::currentUser();
+  $variables['is_admin'] = $current_user->hasPermission('administer site configuration');
 
   // Pass current term to template.
   $variables['term'] = $variables['term'];
@@ -187,21 +206,17 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
   $variables['footer_github'] = theme_get_setting('footer_github') ?: '';
   $variables['footer_medium'] = theme_get_setting('footer_medium') ?: '';
 
-  // Load main menu for footer.
-  $menu_tree = \Drupal::menuTree();
-  $menu_name = 'main';
-  $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
-  $parameters->setMaxDepth(1);
-  $tree = $menu_tree->load($menu_name, $parameters);
-  $manipulators = [
-    ['callable' => 'menu.default_tree_manipulators:checkAccess'],
-    ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
-  ];
-  $tree = $menu_tree->transform($tree, $manipulators);
-  $variables['footer_menu'] = $menu_tree->build($tree);
-
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Add cache context for domain if domain module is enabled.
+  // This ensures the menu is re-rendered when switching between domains.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $variables['#cache']['contexts'][] = 'url.site';
+  }
+
+  // Load header settings.
+  $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
 }
 
 /**
@@ -255,6 +270,37 @@ function news_theme_preprocess_node(&$variables) {
     $word_count = str_word_count(strip_tags($body));
     $reading_time = ceil($word_count / 200); // Assuming 200 words per minute.
     $variables['reading_time'] = $reading_time;
+  }
+
+  // Clean up body field for full view mode.
+  if ($variables['view_mode'] == 'full' && $node->hasField('body') && !$node->get('body')->isEmpty()) {
+    $body_value = $node->get('body')->value;
+
+    // Get field_image filenames to remove from body.
+    $image_filenames = [];
+    if ($node->hasField('field_image') && !$node->get('field_image')->isEmpty()) {
+      foreach ($node->get('field_image') as $image_item) {
+        if ($image_item->entity) {
+          $image_filenames[] = $image_item->entity->getFilename();
+        }
+      }
+    }
+
+    // Remove images that match field_image filenames.
+    if (!empty($image_filenames)) {
+      foreach ($image_filenames as $filename) {
+        // Remove img tags containing this filename.
+        $pattern = '/<img[^>]*' . preg_quote($filename, '/') . '[^>]*>/i';
+        $body_value = preg_replace($pattern, '', $body_value);
+      }
+    }
+
+    // Remove empty img tags (without src or with empty src).
+    $body_value = preg_replace('/<img[^>]*src\s*=\s*["\']?\s*["\']?[^>]*>/i', '', $body_value);
+    $body_value = preg_replace('/<img(?![^>]*src=)[^>]*>/i', '', $body_value);
+
+    // Update the body field with cleaned content.
+    $variables['content']['body'][0]['#text'] = $body_value;
   }
 
   // Get view count from statistics module if available.
@@ -367,12 +413,27 @@ function _news_theme_load_tags() {
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
+  // Count nodes for each term and prepare array.
   foreach ($terms as $term) {
+    // Count published article nodes tagged with this term.
+    $query = \Drupal::entityQuery('node')
+      ->condition('type', 'article')
+      ->condition('status', 1)
+      ->condition('field_tags', $term->id())
+      ->accessCheck(TRUE);
+    $count = $query->count()->execute();
+
     $tags[] = [
       'id' => $term->id(),
       'name' => $term->getName(),
+      'count' => $count,
     ];
   }
+
+  // Sort by count descending.
+  usort($tags, function($a, $b) {
+    return $b['count'] - $a['count'];
+  });
 
   return $tags;
 }
@@ -386,17 +447,88 @@ function _news_theme_get_main_menu_items() {
   $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
   $parameters->setMaxDepth(1);
   $tree = $menu_tree->load($menu_name, $parameters);
+
+  // Use standard menu tree manipulators.
   $manipulators = [
     ['callable' => 'menu.default_tree_manipulators:checkAccess'],
     ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
   ];
   $tree = $menu_tree->transform($tree, $manipulators);
 
+  // Get domain restrictions if domain_menu_item module is enabled.
+  $domain_restrictions = [];
+  $active_domain_id = NULL;
+
+  if (\Drupal::moduleHandler()->moduleExists('domain') &&
+      \Drupal::moduleHandler()->moduleExists('domain_menu_item')) {
+
+    // Get the current domain.
+    $domain_negotiator = \Drupal::service('domain.negotiator');
+    $active_domain = $domain_negotiator->getActiveDomain();
+
+    if ($active_domain) {
+      $active_domain_id = $active_domain->id();
+
+      // Get all menu links that have domain restrictions.
+      $database = \Drupal::database();
+      $query = $database->select('domain_menu_item', 'd')
+        ->fields('d', ['menu_link_content_id', 'domain_id']);
+      $results = $query->execute()->fetchAll();
+
+      // Group by menu link content id.
+      foreach ($results as $row) {
+        $domain_restrictions[$row->menu_link_content_id][] = $row->domain_id;
+      }
+    }
+  }
+
+  $current_path = \Drupal::service('path.current')->getPath();
+  $current_url = Url::fromUserInput($current_path)->toString();
+
   $menu_items = [];
   foreach ($tree as $element) {
+    // Apply domain filtering if domain module is enabled.
+    if ($active_domain_id && !empty($domain_restrictions)) {
+      $plugin_id = $element->link->getPluginId();
+
+      // Check if this is a menu_link_content item.
+      if (strpos($plugin_id, 'menu_link_content:') === 0) {
+        $uuid = str_replace('menu_link_content:', '', $plugin_id);
+
+        // Load the menu link content entity to get the numeric ID.
+        $entities = \Drupal::entityTypeManager()
+          ->getStorage('menu_link_content')
+          ->loadByProperties(['uuid' => $uuid]);
+
+        if ($entities) {
+          $entity = reset($entities);
+          $menu_link_id = $entity->id();
+
+          // Check if this menu link has domain restrictions.
+          if (isset($domain_restrictions[$menu_link_id])) {
+            $allowed_domains = $domain_restrictions[$menu_link_id];
+
+            // If current domain is not in the allowed list, skip this link.
+            if (!in_array($active_domain_id, $allowed_domains)) {
+              continue;
+            }
+          }
+        }
+      }
+    }
+
+    $url_object = $element->link->getUrlObject();
+    $is_active = FALSE;
+
+    // Check if this menu item is active.
+    if ($url_object->toString() === $current_url) {
+      $is_active = TRUE;
+    }
+
     $menu_items[] = [
       'title' => $element->link->getTitle(),
-      'url' => $element->link->getUrlObject(),
+      'url' => $url_object,
+      'is_active' => $is_active,
     ];
   }
 
@@ -558,6 +690,73 @@ function news_theme_preprocess_search_result(&$variables) {
         ],
       ]);
     }
+
+    // Add author information.
+    $author = $node->getOwner();
+    if ($author->isAnonymous()) {
+      $variables['author_name'] = t('Anonymous');
+      $variables['author_avatar'] = NULL;
+      $variables['author_initial'] = 'A';
+    }
+    else {
+      $variables['author_name'] = $author->getDisplayName();
+
+      // Check if user has field_avatar field.
+      if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
+        $avatar_field = $author->get('field_avatar')->first();
+        if ($avatar_field && $avatar_field->entity) {
+          $variables['author_avatar'] = \Drupal::service('file_url_generator')->generateAbsoluteString($avatar_field->entity->getFileUri());
+        }
+        else {
+          $variables['author_avatar'] = NULL;
+        }
+      }
+      else {
+        $variables['author_avatar'] = NULL;
+      }
+
+      // Get first letter of author name for initial.
+      $name = $author->getDisplayName();
+      $variables['author_initial'] = mb_strtoupper(mb_substr($name, 0, 1));
+    }
+
+    // Get view count from statistics module if available.
+    $variables['view_count'] = 0;
+    if (\Drupal::moduleHandler()->moduleExists('statistics')) {
+      $database = \Drupal::database();
+      try {
+        if ($database->schema()->tableExists('node_counter')) {
+          $query = $database->select('node_counter', 'nc')
+            ->fields('nc', ['totalcount'])
+            ->condition('nid', $node->id());
+          $result = $query->execute()->fetchField();
+          if ($result !== FALSE) {
+            $variables['view_count'] = (int) $result;
+          }
+        }
+      }
+      catch (\Exception $e) {
+        \Drupal::logger('news_theme')->error('Error fetching view count: @message', ['@message' => $e->getMessage()]);
+      }
+    }
+
+    // Add node ID for collect button.
+    $variables['node_id'] = $node->id();
+
+    // Add longer body text excerpt.
+    if ($node->hasField('body') && !$node->get('body')->isEmpty()) {
+      $body_value = $node->get('body')->value;
+      $plain_text = strip_tags($body_value);
+      // Increase to 300 characters (from 200).
+      if (mb_strlen($plain_text) > 300) {
+        $plain_text = mb_substr($plain_text, 0, 300) . '...';
+      }
+      $variables['body_excerpt'] = $plain_text;
+    }
+
+    // Add formatted date without author information for footer.
+    $created = $node->getCreatedTime();
+    $variables['date'] = \Drupal::service('date.formatter')->format($created, 'custom', 'F j, Y');
   }
 }
 
@@ -736,4 +935,162 @@ function _news_theme_time_ago($timestamp) {
     $days = floor($time_ago / 86400);
     return t('@count days ago', ['@count' => $days]);
   }
+}
+
+/**
+ * Helper function to get exchange rates for UAH.
+ *
+ * Fetches UAH exchange rates from a free API and caches for 3 hours.
+ *
+ * @return array
+ *   Array of exchange rates with currency codes as keys.
+ */
+function _news_theme_get_exchange_rates() {
+  $cache_key = 'news_theme:exchange_rates';
+  $cache = \Drupal::cache()->get($cache_key);
+
+  if ($cache && !empty($cache->data)) {
+    return $cache->data;
+  }
+
+  // Currencies to display: EUR, USD, PLN, GBP, MDL, CZK, CHF, DKK, NOK
+  $currencies = ['EUR', 'USD', 'PLN', 'GBP', 'MDL', 'CZK', 'CHF', 'DKK', 'NOK'];
+  $rates = [];
+
+  try {
+    // Use exchangerate-api.com free API (no key required)
+    $url = 'https://api.exchangerate-api.com/v4/latest/UAH';
+    $response = \Drupal::httpClient()->get($url, ['timeout' => 5]);
+
+    if ($response->getStatusCode() == 200) {
+      $data = json_decode($response->getBody(), TRUE);
+
+      if (!empty($data['rates'])) {
+        foreach ($currencies as $currency) {
+          if (isset($data['rates'][$currency]) && $data['rates'][$currency] > 0) {
+            // Invert the rate to show how many UAH for 1 unit of foreign currency
+            $inverted_rate = 1 / $data['rates'][$currency];
+            $rates[$currency] = [
+              'code' => $currency,
+              'rate' => number_format($inverted_rate, 2),
+            ];
+          }
+        }
+      }
+    }
+  }
+  catch (\Exception $e) {
+    \Drupal::logger('news_theme')->error('Error fetching exchange rates: @message', ['@message' => $e->getMessage()]);
+  }
+
+  // Cache for 3 hours (10800 seconds).
+  // This cache will be automatically cleared when Drupal cache is cleared.
+  if (!empty($rates)) {
+    \Drupal::cache()->set($cache_key, $rates, \Drupal::time()->getRequestTime() + 10800);
+  }
+
+  return $rates;
+}
+
+/**
+ * Helper function to get top news by category.
+ *
+ * Fetches up to 15 unique articles (5 per block, 3 blocks).
+ * Ensures each article appears only once even if assigned to multiple categories.
+ *
+ * @return array
+ *   Array of articles with their category names.
+ */
+function _news_theme_get_top_news_by_category() {
+  $articles = [];
+  $used_nids = [];
+  $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+  $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
+
+  // Try to get 1 article from each category first
+  foreach ($terms as $term) {
+    if (count($articles) >= 15) {
+      break;
+    }
+
+    $query = \Drupal::entityQuery('node')
+      ->condition('type', 'article')
+      ->condition('status', 1)
+      ->condition('field_tags', $term->id())
+      ->sort('created', 'DESC')
+      ->range(0, 10)
+      ->accessCheck(TRUE);
+
+    $nids = $query->execute();
+
+    foreach ($nids as $nid) {
+      if (count($articles) >= 15) {
+        break;
+      }
+
+      // Skip if we've already added this article
+      if (in_array($nid, $used_nids)) {
+        continue;
+      }
+
+      $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
+
+      if ($node) {
+        $articles[] = [
+          'title' => $node->getTitle(),
+          'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
+          'category_name' => $term->getName(),
+          'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+          'created' => $node->getCreatedTime(),
+        ];
+        $used_nids[] = $nid;
+        break; // Only take one article per category in first pass
+      }
+    }
+  }
+
+  // If we have fewer than 15 articles, get more from categories
+  if (count($articles) < 15) {
+    foreach ($terms as $term) {
+      if (count($articles) >= 15) {
+        break;
+      }
+
+      $query = \Drupal::entityQuery('node')
+        ->condition('type', 'article')
+        ->condition('status', 1)
+        ->condition('field_tags', $term->id())
+        ->sort('created', 'DESC')
+        ->range(0, 20)
+        ->accessCheck(TRUE);
+
+      $nids = $query->execute();
+
+      foreach ($nids as $nid) {
+        if (count($articles) >= 15) {
+          break;
+        }
+
+        // Skip if we've already added this article
+        if (in_array($nid, $used_nids)) {
+          continue;
+        }
+
+        $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
+
+        if ($node) {
+          $articles[] = [
+            'title' => $node->getTitle(),
+            'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
+            'category_name' => $term->getName(),
+            'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+            'created' => $node->getCreatedTime(),
+          ];
+          $used_nids[] = $nid;
+        }
+      }
+    }
+  }
+
+  return $articles;
 }
