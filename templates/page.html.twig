@@ -4,4 +4,31 @@
  * Theme implementation for all pages (except front page).
  */
 #}
-{% extends "html.html.twig" %}
+<!DOCTYPE html>
+<html{{ html_attributes }}>
+<head>
+    <head-placeholder token="{{ placeholder_token }}">
+    <title>{{ head_title|safe_join(' | ') }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <css-placeholder token="{{ placeholder_token }}">
+    <js-placeholder token="{{ placeholder_token }}">
+</head>
+<body{{ attributes.addClass('bg-gray-50') }}>
+    <a href="#main-content" class="visually-hidden focusable">
+        {{ 'Skip to main content'|t }}
+    </a>
+    {{ page_top }}
+
+    {% include '@news_theme/includes/header-menu.html.twig' %}
+    {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': null} %}
+
+    <div id="main-content">
+        {{ page.content }}
+    </div>
+
+    {% include '@news_theme/includes/footer.html.twig' %}
+
+    {{ page_bottom }}
+    <js-bottom-placeholder token="{{ placeholder_token }}">
+</body>
+</html>

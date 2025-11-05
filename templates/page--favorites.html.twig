@@ -7,9 +7,25 @@
  * Articles are loaded via JavaScript based on localStorage.
  */
 #}
-{% extends "html.html.twig" %}
+<!DOCTYPE html>
+<html{{ html_attributes }}>
+  <head>
+    <head-placeholder token="{{ placeholder_token }}">
+    <title>{{ head_title|safe_join(' | ') }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <css-placeholder token="{{ placeholder_token }}">
+    <js-placeholder token="{{ placeholder_token }}">
+  </head>
+  <body{{ attributes }}>
+    <a href="#main-content" class="visually-hidden focusable skip-link">
+      {{ 'Skip to main content'|t }}
+    </a>
+    {{ page_top }}
 
-{% block before_content %}
+    <!-- Header -->
+    {% include '@news_theme/includes/header-menu.html.twig' %}
+    {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': null} %}
+
     <!-- Filter Buttons - Main Menu -->
     {% if main_menu_items %}
         <div class="max-w-7xl mx-auto mt-6">
@@ -23,9 +39,7 @@
             </div>
         </div>
     {% endif %}
-{% endblock %}
 
-{% block content %}
     <!-- Main Content -->
     <div id="favorites-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         <!-- Loading message -->
@@ -50,9 +64,13 @@
             <!-- Articles will be loaded here via JavaScript -->
         </div>
     </div>
-{% endblock %}
 
-{% block after_content %}
+    <!-- Footer -->
+    {% include '@news_theme/includes/footer.html.twig' %}
+
+    {{ page_bottom }}
+    <js-bottom-placeholder token="{{ placeholder_token }}">
+
     <script>
     (function() {
         // Get favorites from localStorage
@@ -98,4 +116,5 @@
         }
     })();
     </script>
-{% endblock %}
+  </body>
+</html>
