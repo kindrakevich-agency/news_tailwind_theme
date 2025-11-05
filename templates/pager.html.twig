@@ -9,7 +9,7 @@
  */
 #}
 {% if items %}
-    <nav class="flex items-center justify-center space-x-2 my-12" role="navigation" aria-label="Pagination">
+    <nav class="flex items-center justify-center space-x-2 my-4 md:my-12" role="navigation" aria-label="Pagination">
         {# Previous button #}
         {% if items.previous %}
             <a href="{{ items.previous.href }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" rel="prev">

@@ -345,14 +345,25 @@ function news_theme_preprocess_node(&$variables) {
     $variables['body_plain'] = $plain_text;
   }
 
-  // Get prev/next articles and related articles (only for full view mode).
+  // Get prev/next articles and article tags (only for full view mode).
   if ($variables['view_mode'] == 'full' && $node->bundle() == 'article') {
     $prev_next = _news_theme_get_prev_next_articles($node);
     $variables['prev_article'] = $prev_next['prev'];
     $variables['next_article'] = $prev_next['next'];
 
-    // Get related articles based on tags.
-    $variables['related_articles'] = _news_theme_get_related_articles($node);
+    // Get article tags for display.
+    $variables['article_tags'] = [];
+    if ($node->hasField('field_tags') && !$node->get('field_tags')->isEmpty()) {
+      foreach ($node->get('field_tags') as $tag_item) {
+        $term = $tag_item->entity;
+        if ($term) {
+          $variables['article_tags'][] = [
+            'name' => $term->getName(),
+            'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+          ];
+        }
+      }
+    }
   }
 }
 
