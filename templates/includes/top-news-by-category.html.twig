@@ -4,33 +4,19 @@
  * Theme implementation for top news by category.
  *
  * Available variables:
- * - top_news_by_category: Array of categories with their top articles.
+ * - top_news_by_category: Array of articles with their category names.
  */
 #}
 {% if top_news_by_category %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <h2 class="text-3xl font-bold text-gray-900 mb-8">{{ 'Top News by Category'|t }}</h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {% for category in top_news_by_category %}
-            <div class="bg-white rounded-lg shadow-sm p-6">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">
-                    <a href="{{ category.url }}" class="hover:text-teal-600 transition-colors">
-                        # {{ category.name }}
-                    </a>
-                </h3>
-
-                {% if category.articles %}
-                    <ul class="space-y-3">
-                        {% for article in category.articles %}
-                            <li class="border-b border-gray-100 last:border-0 pb-3 last:pb-0">
-                                <a href="{{ article.url }}" class="text-sm text-gray-700 hover:text-teal-600 transition-colors line-clamp-2">
-                                    {{ article.title }}
-                                </a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for article in top_news_by_category %}
+            <div class="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+                <a href="{{ article.url }}" class="text-sm text-gray-700 hover:text-teal-600 transition-colors line-clamp-2 block">
+                    {{ article.title }}. <span class="text-teal-600 font-medium">{{ article.category_name }}</span>
+                </a>
             </div>
         {% endfor %}
     </div>
