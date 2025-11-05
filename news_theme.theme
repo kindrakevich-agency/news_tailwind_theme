@@ -159,6 +159,12 @@ function news_theme_preprocess_page(&$variables) {
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 
+  // Add cache context for domain if domain module is enabled.
+  // This ensures the menu is re-rendered when switching between domains.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $variables['#cache']['contexts'][] = 'url.site';
+  }
+
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
 
@@ -202,6 +208,12 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
 
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
+
+  // Add cache context for domain if domain module is enabled.
+  // This ensures the menu is re-rendered when switching between domains.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $variables['#cache']['contexts'][] = 'url.site';
+  }
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
@@ -438,6 +450,9 @@ function _news_theme_get_main_menu_items() {
 
   // Use standard menu tree manipulators.
   // This ensures compatibility with domain_menu_item module and other menu alterations.
+  // The domain_menu_item module uses hook_menu_links_discovered_alter() to filter
+  // menu links by domain. The menu tree service loads from discovered links, so
+  // it will automatically respect domain filtering.
   $manipulators = [
     ['callable' => 'menu.default_tree_manipulators:checkAccess'],
     ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
