@@ -174,7 +174,6 @@ Child templates can override these blocks to customize content:
 
 **Available Blocks:**
 - `head_extra` - Additional head content
-- `body_classes` - Additional body CSS classes
 - `before_content` - Content before main content area (e.g., filter buttons, newsletter)
 - `content` - Main content area
 - `after_content` - Content after main content area (e.g., JavaScript)
