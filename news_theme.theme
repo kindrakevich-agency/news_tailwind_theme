@@ -364,6 +364,9 @@ function news_theme_preprocess_node(&$variables) {
         }
       }
     }
+
+    // Get related articles based on tags.
+    $variables['related_articles'] = _news_theme_get_related_articles($node);
   }
 }
 
