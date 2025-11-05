@@ -128,17 +128,25 @@ news_theme/
 ├── js/                                            # JavaScript files (if needed)
 ├── templates/
 │   ├── includes/
+│   │   ├── exchange-rates.html.twig              # Exchange rates block
+│   │   ├── footer.html.twig                      # Footer with social links
 │   │   ├── header-menu.html.twig                 # Header with logo and search
 │   │   ├── header-tags.html.twig                 # Taxonomy navigation
-│   │   └── footer.html.twig                      # Footer with social links
+│   │   ├── newsletter-featured.html.twig         # Newsletter/featured article block
+│   │   └── top-news-by-category.html.twig        # Top news by category block
 │   ├── field--body.html.twig                     # Body field template
 │   ├── field--field-image.html.twig              # Image field template
 │   ├── field--field-tags.html.twig               # Tags field template
+│   ├── html.html.twig                            # Base HTML template (parent)
 │   ├── node--article.html.twig                   # Full article page
 │   ├── node--article--teaser.html.twig           # Article teaser (listing)
+│   ├── page--favorites.html.twig                 # Favorites page template
 │   ├── page--front.html.twig                     # Front page template
+│   ├── page--search.html.twig                    # Search results page template
+│   ├── page--taxonomy--term.html.twig            # Taxonomy term page template
 │   ├── page.html.twig                            # Default page template
 │   ├── pager.html.twig                           # Pagination template
+│   ├── search-result.html.twig                   # Search result item template
 │   ├── taxonomy-term--tags.html.twig             # Taxonomy term page
 │   └── views-view-unformatted.html.twig          # Views unformatted template
 ├── news_theme.info.yml                            # Theme info file
@@ -147,6 +155,74 @@ news_theme/
 ├── news_theme.theme                               # Theme functions
 └── README.md                                      # This file
 ```
+
+## Template Inheritance
+
+This theme uses Twig's template inheritance to reduce code duplication and maintain consistency across pages.
+
+### Base Template (html.html.twig)
+
+All page templates extend from `html.html.twig`, which provides the common HTML structure:
+- DOCTYPE and html tag
+- Head section with placeholders, title, and Tailwind CSS CDN
+- Body with header, navigation, and footer
+- Page top and bottom placeholders
+
+### Template Blocks
+
+Child templates can override these blocks to customize content:
+
+**Available Blocks:**
+- `head_extra` - Additional head content
+- `body_classes` - Additional body CSS classes
+- `before_content` - Content before main content area (e.g., filter buttons, newsletter)
+- `content` - Main content area
+- `after_content` - Content after main content area (e.g., JavaScript)
+
+### Example Usage
+
+**Simple page (page.html.twig):**
+```twig
+{% extends "html.html.twig" %}
+{# Uses default blocks, no overrides needed #}
+```
+
+**Front page with custom content (page--front.html.twig):**
+```twig
+{% extends "html.html.twig" %}
+
+{% block before_content %}
+    <!-- Filter buttons, newsletter, exchange rates, etc. -->
+{% endblock %}
+
+{% block content %}
+    <!-- Custom main content wrapper -->
+{% endblock %}
+```
+
+**Favorites page with JavaScript (page--favorites.html.twig):**
+```twig
+{% extends "html.html.twig" %}
+
+{% block before_content %}
+    <!-- Filter buttons -->
+{% endblock %}
+
+{% block content %}
+    <!-- Favorites list with loading states -->
+{% endblock %}
+
+{% block after_content %}
+    <!-- JavaScript for loading favorites -->
+{% endblock %}
+```
+
+### Benefits
+
+- **DRY (Don't Repeat Yourself)**: Common HTML structure defined once
+- **Easy Maintenance**: Changes to header/footer/structure in one place
+- **Consistency**: All pages share the same base structure
+- **Flexibility**: Easy to override specific sections when needed
 
 ## Customization
 

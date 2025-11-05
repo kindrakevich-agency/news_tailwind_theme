@@ -8,24 +8,9 @@
  * - logged_in: TRUE if the user is logged in
  */
 #}
-<!DOCTYPE html>
-<html{{ html_attributes }}>
-<head>
-    <head-placeholder token="{{ placeholder_token }}">
-    <title>{{ head_title|safe_join(' | ') }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <css-placeholder token="{{ placeholder_token }}">
-    <js-placeholder token="{{ placeholder_token }}">
-</head>
-<body{{ attributes.addClass('bg-gray-50') }}>
-    <a href="#main-content" class="visually-hidden focusable">
-        {{ 'Skip to main content'|t }}
-    </a>
-    {{ page_top }}
+{% extends "html.html.twig" %}
 
-    {% include '@news_theme/includes/header-menu.html.twig' %}
-    {% include '@news_theme/includes/header-tags.html.twig' with {'tags': tags, 'current_term': current_term} %}
-
+{% block before_content %}
     <!-- Filter Buttons - Main Menu -->
     {% if main_menu_items %}
         <div class="max-w-7xl mx-auto mt-6">
@@ -39,15 +24,11 @@
             </div>
         </div>
     {% endif %}
+{% endblock %}
 
+{% block content %}
     <!-- Main Content Grid -->
     <div id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         {{ page.content }}
     </div>
-
-    {% include '@news_theme/includes/footer.html.twig' %}
-
-    {{ page_bottom }}
-    <js-bottom-placeholder token="{{ placeholder_token }}">
-</body>
-</html>
+{% endblock %}
