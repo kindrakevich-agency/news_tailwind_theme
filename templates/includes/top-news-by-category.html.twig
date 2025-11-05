@@ -11,12 +11,16 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <h2 class="text-3xl font-bold text-gray-900 mb-8">{{ 'Top News by Category'|t }}</h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for article in top_news_by_category %}
-            <div class="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
-                <a href="{{ article.url }}" class="text-sm text-gray-700 hover:text-teal-600 transition-colors line-clamp-2 block">
-                    {{ article.title }}. <span class="text-teal-600 font-medium">{{ article.category_name }}</span>
-                </a>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {% for column in top_news_by_category|batch(3) %}
+            <div class="bg-white rounded-lg shadow-sm p-6 space-y-4">
+                {% for article in column %}
+                    <div class="{% if not loop.last %}pb-4 border-b border-gray-200{% endif %}">
+                        <a href="{{ article.url }}" class="text-sm text-gray-700 hover:text-teal-600 transition-colors line-clamp-2 block">
+                            {{ article.title }}. <span class="text-teal-600 font-medium">{{ article.category_name }}</span>
+                        </a>
+                    </div>
+                {% endfor %}
             </div>
         {% endfor %}
     </div>

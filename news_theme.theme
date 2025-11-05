@@ -937,8 +937,12 @@ function _news_theme_get_top_news_by_category() {
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
+  // Try to get 1 article from each category first
   foreach ($terms as $term) {
-    // Query for top 1 most recent published article in this category.
+    if (count($articles) >= 9) {
+      break;
+    }
+
     $query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
@@ -961,6 +965,44 @@ function _news_theme_get_top_news_by_category() {
           'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
           'created' => $node->getCreatedTime(),
         ];
+      }
+    }
+  }
+
+  // If we have fewer than 9 articles, get more from categories that have multiple articles
+  if (count($articles) < 9) {
+    foreach ($terms as $term) {
+      if (count($articles) >= 9) {
+        break;
+      }
+
+      // Get up to 3 articles from this category (skip the first one we already got)
+      $query = \Drupal::entityQuery('node')
+        ->condition('type', 'article')
+        ->condition('status', 1)
+        ->condition('field_tags', $term->id())
+        ->sort('created', 'DESC')
+        ->range(1, 2)
+        ->accessCheck(TRUE);
+
+      $nids = $query->execute();
+
+      foreach ($nids as $nid) {
+        if (count($articles) >= 9) {
+          break;
+        }
+
+        $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
+
+        if ($node) {
+          $articles[] = [
+            'title' => $node->getTitle(),
+            'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
+            'category_name' => $term->getName(),
+            'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+            'created' => $node->getCreatedTime(),
+          ];
+        }
       }
     }
   }
