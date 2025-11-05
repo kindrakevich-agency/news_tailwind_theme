@@ -449,21 +449,74 @@ function _news_theme_get_main_menu_items() {
   $tree = $menu_tree->load($menu_name, $parameters);
 
   // Use standard menu tree manipulators.
-  // This ensures compatibility with domain_menu_item module and other menu alterations.
-  // The domain_menu_item module uses hook_menu_links_discovered_alter() to filter
-  // menu links by domain. The menu tree service loads from discovered links, so
-  // it will automatically respect domain filtering.
   $manipulators = [
     ['callable' => 'menu.default_tree_manipulators:checkAccess'],
     ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
   ];
   $tree = $menu_tree->transform($tree, $manipulators);
 
+  // Get domain restrictions if domain_menu_item module is enabled.
+  $domain_restrictions = [];
+  $active_domain_id = NULL;
+
+  if (\Drupal::moduleHandler()->moduleExists('domain') &&
+      \Drupal::moduleHandler()->moduleExists('domain_menu_item')) {
+
+    // Get the current domain.
+    $domain_negotiator = \Drupal::service('domain.negotiator');
+    $active_domain = $domain_negotiator->getActiveDomain();
+
+    if ($active_domain) {
+      $active_domain_id = $active_domain->id();
+
+      // Get all menu links that have domain restrictions.
+      $database = \Drupal::database();
+      $query = $database->select('domain_menu_item', 'd')
+        ->fields('d', ['menu_link_content_id', 'domain_id']);
+      $results = $query->execute()->fetchAll();
+
+      // Group by menu link content id.
+      foreach ($results as $row) {
+        $domain_restrictions[$row->menu_link_content_id][] = $row->domain_id;
+      }
+    }
+  }
+
   $current_path = \Drupal::service('path.current')->getPath();
   $current_url = Url::fromUserInput($current_path)->toString();
 
   $menu_items = [];
   foreach ($tree as $element) {
+    // Apply domain filtering if domain module is enabled.
+    if ($active_domain_id && !empty($domain_restrictions)) {
+      $plugin_id = $element->link->getPluginId();
+
+      // Check if this is a menu_link_content item.
+      if (strpos($plugin_id, 'menu_link_content:') === 0) {
+        $uuid = str_replace('menu_link_content:', '', $plugin_id);
+
+        // Load the menu link content entity to get the numeric ID.
+        $entities = \Drupal::entityTypeManager()
+          ->getStorage('menu_link_content')
+          ->loadByProperties(['uuid' => $uuid]);
+
+        if ($entities) {
+          $entity = reset($entities);
+          $menu_link_id = $entity->id();
+
+          // Check if this menu link has domain restrictions.
+          if (isset($domain_restrictions[$menu_link_id])) {
+            $allowed_domains = $domain_restrictions[$menu_link_id];
+
+            // If current domain is not in the allowed list, skip this link.
+            if (!in_array($active_domain_id, $allowed_domains)) {
+              continue;
+            }
+          }
+        }
+      }
+    }
+
     $url_object = $element->link->getUrlObject();
     $is_active = FALSE;
 
@@ -942,19 +995,21 @@ function _news_theme_get_exchange_rates() {
 /**
  * Helper function to get top news by category.
  *
- * Fetches top 1 most recent article for each category (tag).
+ * Fetches up to 15 unique articles (5 per block, 3 blocks).
+ * Ensures each article appears only once even if assigned to multiple categories.
  *
  * @return array
  *   Array of articles with their category names.
  */
 function _news_theme_get_top_news_by_category() {
   $articles = [];
+  $used_nids = [];
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
   // Try to get 1 article from each category first
   foreach ($terms as $term) {
-    if (count($articles) >= 9) {
+    if (count($articles) >= 15) {
       break;
     }
 
@@ -963,13 +1018,21 @@ function _news_theme_get_top_news_by_category() {
       ->condition('status', 1)
       ->condition('field_tags', $term->id())
       ->sort('created', 'DESC')
-      ->range(0, 1)
+      ->range(0, 10)
       ->accessCheck(TRUE);
 
     $nids = $query->execute();
 
-    if (!empty($nids)) {
-      $nid = reset($nids);
+    foreach ($nids as $nid) {
+      if (count($articles) >= 15) {
+        break;
+      }
+
+      // Skip if we've already added this article
+      if (in_array($nid, $used_nids)) {
+        continue;
+      }
+
       $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
 
       if ($node) {
@@ -980,31 +1043,37 @@ function _news_theme_get_top_news_by_category() {
           'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
           'created' => $node->getCreatedTime(),
         ];
+        $used_nids[] = $nid;
+        break; // Only take one article per category in first pass
       }
     }
   }
 
-  // If we have fewer than 9 articles, get more from categories that have multiple articles
-  if (count($articles) < 9) {
+  // If we have fewer than 15 articles, get more from categories
+  if (count($articles) < 15) {
     foreach ($terms as $term) {
-      if (count($articles) >= 9) {
+      if (count($articles) >= 15) {
         break;
       }
 
-      // Get up to 3 articles from this category (skip the first one we already got)
       $query = \Drupal::entityQuery('node')
         ->condition('type', 'article')
         ->condition('status', 1)
         ->condition('field_tags', $term->id())
         ->sort('created', 'DESC')
-        ->range(1, 2)
+        ->range(0, 20)
         ->accessCheck(TRUE);
 
       $nids = $query->execute();
 
       foreach ($nids as $nid) {
-        if (count($articles) >= 9) {
+        if (count($articles) >= 15) {
           break;
+        }
+
+        // Skip if we've already added this article
+        if (in_array($nid, $used_nids)) {
+          continue;
         }
 
         $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
@@ -1017,6 +1086,7 @@ function _news_theme_get_top_news_by_category() {
             'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
             'created' => $node->getCreatedTime(),
           ];
+          $used_nids[] = $nid;
         }
       }
     }

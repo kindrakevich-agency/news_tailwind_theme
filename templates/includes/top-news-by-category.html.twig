@@ -9,10 +9,8 @@
 #}
 {% if top_news_by_category %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <h2 class="text-3xl font-bold text-gray-900 mb-8">{{ 'Top News by Category'|t }}</h2>
-
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-6">
-        {% for column in top_news_by_category|batch(3) %}
+        {% for column in top_news_by_category|batch(5) %}
             <div class="bg-white rounded-none lg:rounded-lg shadow-sm p-6 space-y-4">
                 {% for article in column %}
                     <div>
