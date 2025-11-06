@@ -23,7 +23,7 @@
 %}
 <article{{ attributes.addClass(classes) }}>
     {% if content.field_image|render %}
-        <a href="{{ url }}">
+        <a href="{{ url }}" class="block dark:brightness-75">
             {{ content.field_image }}
         </a>
     {% endif %}
@@ -86,7 +86,7 @@
         {% endif %}
 
         {% if body_plain %}
-            <p class="text-sm text-gray-600 mb-4 line-clamp-3">
+            <p class="text-[1rem] leading-[1.3rem] md:text-sm md:leading-normal text-gray-600 mb-4 line-clamp-3">
                 {{ body_plain }}
             </p>
         {% endif %}

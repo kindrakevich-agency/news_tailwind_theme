@@ -8,15 +8,12 @@
  */
 #}
 {% if exchange_rates %}
-<div class="border-t border-b md:border-0 border-gray-200 bg-white md:bg-transparent mb-6 md:mb-0">
+<div class="border-t border-b md:border-0 border-gray-200 dark:border-gray-200/20 mb-6 md:mb-0">
     <div class="max-w-7xl mx-auto md:px-4 lg:px-8">
-        <div class="flex items-center h-12 overflow-x-auto scrollbar-hide md:border-t md:border-b md:border-gray-200">
-            <div class="flex items-center space-x-8 whitespace-nowrap">
-                <div class="text-sm font-semibold text-gray-900 pl-4 md:pl-0">
-                    {{ 'UAH Exchange Rates'|t }}:
-                </div>
+        <div id="exchange-rates-scroll" class="flex items-center h-12 overflow-x-auto scrollbar-hide md:border-t md:border-b md:border-gray-200 dark:md:border-gray-200/20 cursor-pointer">
+            <div id="exchange-rates-content" class="flex items-center space-x-8 whitespace-nowrap pl-4 md:pl-0">
                 {% for currency_code, rate_data in exchange_rates %}
-                    <div class="text-sm text-gray-600">
+                    <div class="text-base text-gray-600">
                         <span class="font-medium text-gray-900">{{ currency_code }}</span>
                         <span class="mx-1">→</span>
                         <span class="text-teal-600 font-semibold">{{ rate_data.rate }} UAH</span>
@@ -26,4 +23,78 @@
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    const scrollContainer = document.getElementById('exchange-rates-scroll');
+    const scrollContent = document.getElementById('exchange-rates-content');
+
+    if (!scrollContainer || !scrollContent) return;
+
+    let isScrolling = true;
+    let scrollPosition = 0;
+    let scrollSpeed = 0.5;
+    let animationFrame = null;
+    let isHovered = false;
+
+    function autoScroll() {
+        if (!isScrolling || isHovered) {
+            animationFrame = requestAnimationFrame(autoScroll);
+            return;
+        }
+
+        scrollPosition += scrollSpeed;
+
+        // Infinite scroll - reset when reaching end
+        const maxScroll = scrollContent.scrollWidth - scrollContainer.clientWidth;
+        if (scrollPosition >= maxScroll) {
+            scrollPosition = 0;
+        }
+
+        scrollContainer.scrollLeft = scrollPosition;
+        animationFrame = requestAnimationFrame(autoScroll);
+    }
+
+    function toggleScroll() {
+        isScrolling = !isScrolling;
+        if (isScrolling && !animationFrame) {
+            autoScroll();
+        }
+    }
+
+    // Click to pause/play on both mobile and desktop
+    scrollContainer.addEventListener('click', toggleScroll);
+
+    // Desktop: pause on hover
+    scrollContainer.addEventListener('mouseenter', function() {
+        isHovered = true;
+    });
+
+    scrollContainer.addEventListener('mouseleave', function() {
+        isHovered = false;
+    });
+
+    // Start auto-scroll on page load
+    autoScroll();
+
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
+            const wasScrolling = isScrolling;
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+            scrollPosition = 0;
+            scrollContainer.scrollLeft = 0;
+            isScrolling = wasScrolling;
+            if (isScrolling) {
+                autoScroll();
+            }
+        }, 250);
+    });
+})();
+</script>
 {% endif %}

@@ -286,18 +286,18 @@ function news_theme_preprocess_node(&$variables) {
       }
     }
 
-    // Remove images that match field_image filenames.
+    // Remove images that match field_image filenames, but preserve inline-images.
     if (!empty($image_filenames)) {
       foreach ($image_filenames as $filename) {
-        // Remove img tags containing this filename.
-        $pattern = '/<img[^>]*' . preg_quote($filename, '/') . '[^>]*>/i';
+        // Only remove img tags with this filename that are NOT in inline-images folder.
+        $pattern = '/<img(?![^>]*inline-images)[^>]*' . preg_quote($filename, '/') . '[^>]*>/i';
         $body_value = preg_replace($pattern, '', $body_value);
       }
     }
 
-    // Remove empty img tags (without src or with empty src).
-    $body_value = preg_replace('/<img[^>]*src\s*=\s*["\']?\s*["\']?[^>]*>/i', '', $body_value);
-    $body_value = preg_replace('/<img(?![^>]*src=)[^>]*>/i', '', $body_value);
+    // Remove only truly empty img tags (no src attribute or src="").
+    // Don't remove images with valid src attributes.
+    $body_value = preg_replace('/<img(?![^>]*src\s*=\s*["\'][^"\']+["\'])[^>]*>/i', '', $body_value);
 
     // Update the body field with cleaned content.
     $variables['content']['body'][0]['#text'] = $body_value;
@@ -345,14 +345,34 @@ function news_theme_preprocess_node(&$variables) {
     $variables['body_plain'] = $plain_text;
   }
 
-  // Get prev/next articles and related articles (only for full view mode).
+  // Get prev/next articles and article tags (only for full view mode).
   if ($variables['view_mode'] == 'full' && $node->bundle() == 'article') {
     $prev_next = _news_theme_get_prev_next_articles($node);
     $variables['prev_article'] = $prev_next['prev'];
     $variables['next_article'] = $prev_next['next'];
 
+    // Get article tags for display.
+    $variables['article_tags'] = [];
+    if ($node->hasField('field_tags') && !$node->get('field_tags')->isEmpty()) {
+      foreach ($node->get('field_tags') as $tag_item) {
+        $term = $tag_item->entity;
+        if ($term) {
+          $variables['article_tags'][] = [
+            'name' => $term->getName(),
+            'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+          ];
+        }
+      }
+    }
+
     // Get related articles based on tags.
     $variables['related_articles'] = _news_theme_get_related_articles($node);
+
+    // Check edit and delete access.
+    $variables['can_edit'] = $node->access('update');
+    $variables['can_delete'] = $node->access('delete');
+    $variables['edit_url'] = $node->toUrl('edit-form')->toString();
+    $variables['delete_url'] = $node->toUrl('delete-form')->toString();
   }
 }
 
@@ -842,14 +862,30 @@ function _news_theme_get_newsletter_articles() {
 
       // Get excerpt from body.
       $excerpt = '';
+      $excerpt_desktop = '';
       if ($featured->hasField('body') && !$featured->get('body')->isEmpty()) {
         $body = $featured->get('body')->value;
         $plain_text = strip_tags($body);
+        // Replace &nbsp; with regular space.
+        $plain_text = str_replace('&nbsp;', ' ', $plain_text);
+        // Replace multiple spaces with single space.
+        $plain_text = preg_replace('/\s+/', ' ', $plain_text);
+        $plain_text = trim($plain_text);
+
+        // Mobile excerpt (200 chars)
         if (mb_strlen($plain_text) > 200) {
           $excerpt = mb_substr($plain_text, 0, 200) . '...';
         }
         else {
           $excerpt = $plain_text;
+        }
+
+        // Desktop excerpt (500 chars)
+        if (mb_strlen($plain_text) > 500) {
+          $excerpt_desktop = mb_substr($plain_text, 0, 500) . '...';
+        }
+        else {
+          $excerpt_desktop = $plain_text;
         }
       }
 
@@ -881,6 +917,7 @@ function _news_theme_get_newsletter_articles() {
         'author_initial' => mb_substr($author->getDisplayName(), 0, 1),
         'author_avatar' => $author_avatar,
         'excerpt' => $excerpt,
+        'excerpt_desktop' => $excerpt_desktop,
         'tags' => $tag_name,
         'reading_time' => $reading_time,
         'time_ago' => $time_ago,
@@ -1007,6 +1044,18 @@ function _news_theme_get_top_news_by_category() {
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
+  // Define color schemes for tags.
+  $color_schemes = [
+    ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
+    ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'hover' => 'hover:bg-purple-200'],
+    ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'hover' => 'hover:bg-red-200'],
+    ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'hover' => 'hover:bg-green-200'],
+    ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'hover' => 'hover:bg-yellow-200'],
+    ['bg' => 'bg-pink-100', 'text' => 'text-pink-800', 'hover' => 'hover:bg-pink-200'],
+    ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'hover' => 'hover:bg-indigo-200'],
+    ['bg' => 'bg-teal-100', 'text' => 'text-teal-800', 'hover' => 'hover:bg-teal-200'],
+  ];
+
   // Try to get 1 article from each category first
   foreach ($terms as $term) {
     if (count($articles) >= 15) {
@@ -1036,12 +1085,19 @@ function _news_theme_get_top_news_by_category() {
       $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
 
       if ($node) {
+        // Assign a consistent color based on term ID.
+        $color_index = $term->id() % count($color_schemes);
+        $colors = $color_schemes[$color_index];
+
         $articles[] = [
           'title' => $node->getTitle(),
           'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
           'category_name' => $term->getName(),
           'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
           'created' => $node->getCreatedTime(),
+          'category_bg' => $colors['bg'],
+          'category_text' => $colors['text'],
+          'category_hover' => $colors['hover'],
         ];
         $used_nids[] = $nid;
         break; // Only take one article per category in first pass
@@ -1079,12 +1135,19 @@ function _news_theme_get_top_news_by_category() {
         $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
 
         if ($node) {
+          // Assign a consistent color based on term ID.
+          $color_index = $term->id() % count($color_schemes);
+          $colors = $color_schemes[$color_index];
+
           $articles[] = [
             'title' => $node->getTitle(),
             'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
             'category_name' => $term->getName(),
             'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
             'created' => $node->getCreatedTime(),
+            'category_bg' => $colors['bg'],
+            'category_text' => $colors['text'],
+            'category_hover' => $colors['hover'],
           ];
           $used_nids[] = $nid;
         }
