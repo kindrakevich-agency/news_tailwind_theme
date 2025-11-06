@@ -866,6 +866,11 @@ function _news_theme_get_newsletter_articles() {
       if ($featured->hasField('body') && !$featured->get('body')->isEmpty()) {
         $body = $featured->get('body')->value;
         $plain_text = strip_tags($body);
+        // Replace &nbsp; with regular space.
+        $plain_text = str_replace('&nbsp;', ' ', $plain_text);
+        // Replace multiple spaces with single space.
+        $plain_text = preg_replace('/\s+/', ' ', $plain_text);
+        $plain_text = trim($plain_text);
 
         // Mobile excerpt (200 chars)
         if (mb_strlen($plain_text) > 200) {
