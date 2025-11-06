@@ -8,9 +8,9 @@
  */
 #}
 {% if exchange_rates %}
-<div class="border-t border-b md:border-0 border-gray-200 mb-6 md:mb-0">
+<div class="border-t border-b md:border-0 border-gray-200 dark:border-gray-200/20 mb-6 md:mb-0">
     <div class="max-w-7xl mx-auto md:px-4 lg:px-8">
-        <div id="exchange-rates-scroll" class="flex items-center h-12 overflow-x-auto scrollbar-hide md:border-t md:border-b md:border-gray-200 cursor-pointer md:cursor-default">
+        <div id="exchange-rates-scroll" class="flex items-center h-12 overflow-x-auto scrollbar-hide md:border-t md:border-b md:border-gray-200 dark:md:border-gray-200/20 cursor-pointer">
             <div id="exchange-rates-content" class="flex items-center space-x-8 whitespace-nowrap pl-4 md:pl-0">
                 {% for currency_code, rate_data in exchange_rates %}
                     <div class="text-base text-gray-600">
@@ -33,18 +33,19 @@
 
     let isScrolling = true;
     let scrollPosition = 0;
-    let scrollSpeed = 0.5; // pixels per frame
+    let scrollSpeed = 0.5;
     let animationFrame = null;
-
-    // Check if we're on mobile
-    const isMobile = () => window.innerWidth < 768;
+    let isHovered = false;
 
     function autoScroll() {
-        if (!isScrolling) return;
+        if (!isScrolling || isHovered) {
+            animationFrame = requestAnimationFrame(autoScroll);
+            return;
+        }
 
         scrollPosition += scrollSpeed;
 
-        // Reset scroll position when we reach the end
+        // Infinite scroll - reset when reaching end
         const maxScroll = scrollContent.scrollWidth - scrollContainer.clientWidth;
         if (scrollPosition >= maxScroll) {
             scrollPosition = 0;
@@ -54,50 +55,43 @@
         animationFrame = requestAnimationFrame(autoScroll);
     }
 
-    function startScroll() {
-        if (isScrolling) return;
-        isScrolling = true;
-        autoScroll();
-    }
-
-    function stopScroll() {
-        isScrolling = false;
-        if (animationFrame) {
-            cancelAnimationFrame(animationFrame);
-            animationFrame = null;
+    function toggleScroll() {
+        isScrolling = !isScrolling;
+        if (isScrolling && !animationFrame) {
+            autoScroll();
         }
     }
 
-    // Desktop: pause on hover
-    if (!isMobile()) {
-        scrollContainer.addEventListener('mouseenter', stopScroll);
-        scrollContainer.addEventListener('mouseleave', startScroll);
+    // Click to pause/play on both mobile and desktop
+    scrollContainer.addEventListener('click', toggleScroll);
 
-        // Start auto-scroll on desktop
-        startScroll();
-    } else {
-        // Mobile: toggle on click
-        scrollContainer.addEventListener('click', function() {
-            if (isScrolling) {
-                stopScroll();
-            } else {
-                startScroll();
-            }
-        });
-    }
+    // Desktop: pause on hover
+    scrollContainer.addEventListener('mouseenter', function() {
+        isHovered = true;
+    });
+
+    scrollContainer.addEventListener('mouseleave', function() {
+        isHovered = false;
+    });
+
+    // Start auto-scroll on page load
+    autoScroll();
 
     // Handle window resize
     let resizeTimeout;
     window.addEventListener('resize', function() {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(function() {
-            stopScroll();
+            const wasScrolling = isScrolling;
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
             scrollPosition = 0;
             scrollContainer.scrollLeft = 0;
-
-            // Restart on desktop after resize
-            if (!isMobile()) {
-                startScroll();
+            isScrolling = wasScrolling;
+            if (isScrolling) {
+                autoScroll();
             }
         }, 250);
     });

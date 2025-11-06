@@ -378,16 +378,16 @@ function news_theme_preprocess_field(&$variables) {
 
   // Format tags field as links.
   if ($element['#field_name'] == 'field_tags') {
-    // Define color schemes for tags.
+    // Define color schemes for tags with dark mode variants.
     $color_schemes = [
-      ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
-      ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'hover' => 'hover:bg-purple-200'],
-      ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'hover' => 'hover:bg-red-200'],
-      ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'hover' => 'hover:bg-green-200'],
-      ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'hover' => 'hover:bg-yellow-200'],
-      ['bg' => 'bg-pink-100', 'text' => 'text-pink-800', 'hover' => 'hover:bg-pink-200'],
-      ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'hover' => 'hover:bg-indigo-200'],
-      ['bg' => 'bg-teal-100', 'text' => 'text-teal-800', 'hover' => 'hover:bg-teal-200'],
+      ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-800 dark:text-blue-400', 'hover' => 'hover:bg-blue-200 dark:hover:bg-blue-900/40'],
+      ['bg' => 'bg-purple-100 dark:bg-purple-900/30', 'text' => 'text-purple-800 dark:text-purple-400', 'hover' => 'hover:bg-purple-200 dark:hover:bg-purple-900/40'],
+      ['bg' => 'bg-red-100 dark:bg-red-900/30', 'text' => 'text-red-800 dark:text-red-400', 'hover' => 'hover:bg-red-200 dark:hover:bg-red-900/40'],
+      ['bg' => 'bg-green-100 dark:bg-green-900/30', 'text' => 'text-green-800 dark:text-green-400', 'hover' => 'hover:bg-green-200 dark:hover:bg-green-900/40'],
+      ['bg' => 'bg-yellow-100 dark:bg-yellow-900/30', 'text' => 'text-yellow-800 dark:text-yellow-400', 'hover' => 'hover:bg-yellow-200 dark:hover:bg-yellow-900/40'],
+      ['bg' => 'bg-pink-100 dark:bg-pink-900/30', 'text' => 'text-pink-800 dark:text-pink-400', 'hover' => 'hover:bg-pink-200 dark:hover:bg-pink-900/40'],
+      ['bg' => 'bg-indigo-100 dark:bg-indigo-900/30', 'text' => 'text-indigo-800 dark:text-indigo-400', 'hover' => 'hover:bg-indigo-200 dark:hover:bg-indigo-900/40'],
+      ['bg' => 'bg-teal-100 dark:bg-teal-900/30', 'text' => 'text-teal-800 dark:text-teal-400', 'hover' => 'hover:bg-teal-200 dark:hover:bg-teal-900/40'],
     ];
 
     $variables['tag_colors'] = [];
@@ -1033,16 +1033,16 @@ function _news_theme_get_top_news_by_category() {
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
-  // Define color schemes for tags.
+  // Define color schemes for tags with dark mode variants.
   $color_schemes = [
-    ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
-    ['bg' => 'bg-purple-100', 'text' => 'text-purple-800', 'hover' => 'hover:bg-purple-200'],
-    ['bg' => 'bg-red-100', 'text' => 'text-red-800', 'hover' => 'hover:bg-red-200'],
-    ['bg' => 'bg-green-100', 'text' => 'text-green-800', 'hover' => 'hover:bg-green-200'],
-    ['bg' => 'bg-yellow-100', 'text' => 'text-yellow-800', 'hover' => 'hover:bg-yellow-200'],
-    ['bg' => 'bg-pink-100', 'text' => 'text-pink-800', 'hover' => 'hover:bg-pink-200'],
-    ['bg' => 'bg-indigo-100', 'text' => 'text-indigo-800', 'hover' => 'hover:bg-indigo-200'],
-    ['bg' => 'bg-teal-100', 'text' => 'text-teal-800', 'hover' => 'hover:bg-teal-200'],
+    ['bg' => 'bg-blue-100 dark:bg-blue-900/30', 'text' => 'text-blue-800 dark:text-blue-400', 'hover' => 'hover:bg-blue-200 dark:hover:bg-blue-900/40'],
+    ['bg' => 'bg-purple-100 dark:bg-purple-900/30', 'text' => 'text-purple-800 dark:text-purple-400', 'hover' => 'hover:bg-purple-200 dark:hover:bg-purple-900/40'],
+    ['bg' => 'bg-red-100 dark:bg-red-900/30', 'text' => 'text-red-800 dark:text-red-400', 'hover' => 'hover:bg-red-200 dark:hover:bg-red-900/40'],
+    ['bg' => 'bg-green-100 dark:bg-green-900/30', 'text' => 'text-green-800 dark:text-green-400', 'hover' => 'hover:bg-green-200 dark:hover:bg-green-900/40'],
+    ['bg' => 'bg-yellow-100 dark:bg-yellow-900/30', 'text' => 'text-yellow-800 dark:text-yellow-400', 'hover' => 'hover:bg-yellow-200 dark:hover:bg-yellow-900/40'],
+    ['bg' => 'bg-pink-100 dark:bg-pink-900/30', 'text' => 'text-pink-800 dark:text-pink-400', 'hover' => 'hover:bg-pink-200 dark:hover:bg-pink-900/40'],
+    ['bg' => 'bg-indigo-100 dark:bg-indigo-900/30', 'text' => 'text-indigo-800 dark:text-indigo-400', 'hover' => 'hover:bg-indigo-200 dark:hover:bg-indigo-900/40'],
+    ['bg' => 'bg-teal-100 dark:bg-teal-900/30', 'text' => 'text-teal-800 dark:text-teal-400', 'hover' => 'hover:bg-teal-200 dark:hover:bg-teal-900/40'],
   ];
 
   // Try to get 1 article from each category first

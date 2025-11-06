@@ -23,7 +23,7 @@
 %}
 <article{{ attributes.addClass(classes) }}>
     {% if content.field_image|render %}
-        <a href="{{ url }}">
+        <a href="{{ url }}" class="block dark:brightness-75">
             {{ content.field_image }}
         </a>
     {% endif %}
