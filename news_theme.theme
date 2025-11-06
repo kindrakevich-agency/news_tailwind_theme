@@ -286,18 +286,18 @@ function news_theme_preprocess_node(&$variables) {
       }
     }
 
-    // Remove images that match field_image filenames.
+    // Remove images that match field_image filenames, but preserve inline-images.
     if (!empty($image_filenames)) {
       foreach ($image_filenames as $filename) {
-        // Remove img tags containing this filename.
-        $pattern = '/<img[^>]*' . preg_quote($filename, '/') . '[^>]*>/i';
+        // Only remove img tags with this filename that are NOT in inline-images folder.
+        $pattern = '/<img(?![^>]*inline-images)[^>]*' . preg_quote($filename, '/') . '[^>]*>/i';
         $body_value = preg_replace($pattern, '', $body_value);
       }
     }
 
-    // Remove empty img tags (without src or with empty src).
-    $body_value = preg_replace('/<img[^>]*src\s*=\s*["\']?\s*["\']?[^>]*>/i', '', $body_value);
-    $body_value = preg_replace('/<img(?![^>]*src=)[^>]*>/i', '', $body_value);
+    // Remove only truly empty img tags (no src attribute or src="").
+    // Don't remove images with valid src attributes.
+    $body_value = preg_replace('/<img(?![^>]*src\s*=\s*["\'][^"\']+["\'])[^>]*>/i', '', $body_value);
 
     // Update the body field with cleaned content.
     $variables['content']['body'][0]['#text'] = $body_value;
@@ -367,6 +367,12 @@ function news_theme_preprocess_node(&$variables) {
 
     // Get related articles based on tags.
     $variables['related_articles'] = _news_theme_get_related_articles($node);
+
+    // Check edit and delete access.
+    $variables['can_edit'] = $node->access('update');
+    $variables['can_delete'] = $node->access('delete');
+    $variables['edit_url'] = $node->toUrl('edit-form')->toString();
+    $variables['delete_url'] = $node->toUrl('delete-form')->toString();
   }
 }
 
