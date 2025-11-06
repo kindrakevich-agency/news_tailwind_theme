@@ -59,8 +59,11 @@
                 </h3>
 
                 <!-- Description -->
-                <p class="text-gray-600 text-[1rem] leading-[1.3rem] md:text-[1rem] md:leading-[1.6rem]">
+                <p class="text-gray-600 text-[1rem] leading-[1.3rem] md:hidden">
                     {{ featured_article.excerpt }}
+                </p>
+                <p class="hidden md:block text-gray-600 text-[1rem] leading-[1.6rem]">
+                    {{ featured_article.excerpt_desktop }}
                 </p>
             </div>
         </div>
