@@ -1,0 +1,21 @@
+{
+  "name": "news-tailwind-theme",
+  "version": "1.0.0",
+  "description": "A modern news website theme with Tailwind CSS for Drupal",
+  "scripts": {
+    "build": "tailwindcss -i ./css/src/input.css -o ./css/style.css --minify",
+    "watch": "tailwindcss -i ./css/src/input.css -o ./css/style.css --watch",
+    "dev": "npm run watch"
+  },
+  "keywords": [
+    "drupal",
+    "theme",
+    "tailwind",
+    "news"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
