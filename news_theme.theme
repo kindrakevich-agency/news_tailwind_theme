@@ -138,10 +138,15 @@ function news_theme_preprocess_page(&$variables) {
   // Check if we're on a taxonomy term page and pass the current term.
   $route_match = \Drupal::routeMatch();
   $variables['current_term'] = NULL;
+  $variables['term_description'] = NULL;
   if ($route_match->getRouteName() == 'entity.taxonomy_term.canonical') {
     $term = $route_match->getParameter('taxonomy_term');
     if ($term) {
       $variables['current_term'] = $term;
+      // Get term description if available.
+      if ($term->hasField('description') && !$term->get('description')->isEmpty()) {
+        $variables['term_description'] = $term->get('description')->value;
+      }
     }
   }
 
