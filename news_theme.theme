@@ -173,6 +173,9 @@ function news_theme_preprocess_page(&$variables) {
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
 
+  // Add language switcher data.
+  _news_theme_add_language_switcher($variables);
+
   // Load newsletter settings and featured articles for frontpage.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
     $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
@@ -1161,4 +1164,61 @@ function _news_theme_get_top_news_by_category() {
   }
 
   return $articles;
+}
+
+/**
+ * Helper function to add language switcher data to page variables.
+ *
+ * @param array &$variables
+ *   The variables array to add language data to.
+ */
+function _news_theme_add_language_switcher(&$variables) {
+  $variables['languages'] = [];
+  $variables['current_language'] = [];
+
+  // Check if language module is enabled.
+  if (!\Drupal::moduleHandler()->moduleExists('language')) {
+    return;
+  }
+
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+  $languages = $language_manager->getLanguages();
+
+  // Add current language info.
+  $variables['current_language'] = [
+    'id' => $current_language->getId(),
+    'name' => $current_language->getName(),
+  ];
+
+  // Only add language switcher if there are multiple languages.
+  if (count($languages) > 1) {
+    $route_name = \Drupal::routeMatch()->getRouteName();
+    $route_parameters = \Drupal::routeMatch()->getRawParameters()->all();
+
+    foreach ($languages as $langcode => $language) {
+      // Get the URL for switching to this language.
+      try {
+        $url = Url::fromRoute($route_name, $route_parameters, [
+          'language' => $language,
+        ])->toString();
+      }
+      catch (\Exception $e) {
+        // Fallback to homepage if route doesn't exist.
+        $url = Url::fromRoute('<front>', [], [
+          'language' => $language,
+        ])->toString();
+      }
+
+      $variables['languages'][$langcode] = [
+        'name' => $language->getName(),
+        'id' => $language->getId(),
+        'url' => $url,
+        'is_current' => ($langcode === $current_language->getId()),
+      ];
+    }
+  }
+
+  // Add cache contexts for language.
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
 }
