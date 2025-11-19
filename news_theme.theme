@@ -132,7 +132,7 @@ function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface 
     $form['language_settings']['language_switcher_enable_domains'] = [
       '#type' => 'checkboxes',
       '#title' => t('Enable language switcher for domains'),
-      '#description' => t('Select the domains where the language switcher should be displayed. If no domains are selected, the language switcher will be shown on all domains.'),
+      '#description' => t('Select the domains where the language switcher should be displayed. The language switcher will only be shown on the selected domains.'),
       '#options' => _news_theme_get_domain_options(),
       '#default_value' => theme_get_setting('language_switcher_enable_domains') ?: [],
     ];
@@ -1227,16 +1227,19 @@ function _news_theme_language_switcher_enabled() {
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $enabled_domains = theme_get_setting('language_switcher_enable_domains') ?: [];
 
-    // If no domains are selected, show on all domains.
-    if (empty(array_filter($enabled_domains))) {
-      return TRUE;
+    // Filter out unchecked domains (value 0).
+    $enabled_domains = array_filter($enabled_domains);
+
+    // If no domains are selected, don't show language switcher.
+    if (empty($enabled_domains)) {
+      return FALSE;
     }
 
     // Check if current domain is in the enabled list.
     $domain_negotiator = \Drupal::service('domain.negotiator');
     $active_domain = $domain_negotiator->getActiveDomain();
 
-    if ($active_domain && isset($enabled_domains[$active_domain->id()]) && $enabled_domains[$active_domain->id()]) {
+    if ($active_domain && in_array($active_domain->id(), array_keys($enabled_domains))) {
       return TRUE;
     }
 
