@@ -118,6 +118,33 @@ function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface 
     '#default_value' => theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN',
     '#description' => t('The header text displayed above the featured article section on the homepage.'),
   ];
+
+  // Language switcher settings.
+  $form['language_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Language Switcher Settings'),
+    '#open' => FALSE,
+    '#description' => t('Configure language switcher visibility. The language switcher will only appear when multiple languages are enabled in Drupal.'),
+  ];
+
+  // Check if domain module is enabled.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $form['language_settings']['language_switcher_enable_domains'] = [
+      '#type' => 'checkboxes',
+      '#title' => t('Enable language switcher for domains'),
+      '#description' => t('Select the domains where the language switcher should be displayed. If no domains are selected, the language switcher will be shown on all domains.'),
+      '#options' => _news_theme_get_domain_options(),
+      '#default_value' => theme_get_setting('language_switcher_enable_domains') ?: [],
+    ];
+  }
+  else {
+    $form['language_settings']['language_switcher_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Enable language switcher'),
+      '#description' => t('Show the language switcher in the header when multiple languages are available.'),
+      '#default_value' => theme_get_setting('language_switcher_enabled') ?? TRUE,
+    ];
+  }
 }
 
 /**
@@ -1167,6 +1194,61 @@ function _news_theme_get_top_news_by_category() {
 }
 
 /**
+ * Helper function to get domain options for theme settings.
+ *
+ * @return array
+ *   Array of domain options keyed by domain ID.
+ */
+function _news_theme_get_domain_options() {
+  $options = [];
+
+  if (!\Drupal::moduleHandler()->moduleExists('domain')) {
+    return $options;
+  }
+
+  $domain_storage = \Drupal::entityTypeManager()->getStorage('domain');
+  $domains = $domain_storage->loadMultiple();
+
+  foreach ($domains as $domain) {
+    $options[$domain->id()] = $domain->label() . ' (' . $domain->getHostname() . ')';
+  }
+
+  return $options;
+}
+
+/**
+ * Helper function to check if language switcher should be shown.
+ *
+ * @return bool
+ *   TRUE if language switcher should be displayed, FALSE otherwise.
+ */
+function _news_theme_language_switcher_enabled() {
+  // Check if domain module is enabled.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $enabled_domains = theme_get_setting('language_switcher_enable_domains') ?: [];
+
+    // If no domains are selected, show on all domains.
+    if (empty(array_filter($enabled_domains))) {
+      return TRUE;
+    }
+
+    // Check if current domain is in the enabled list.
+    $domain_negotiator = \Drupal::service('domain.negotiator');
+    $active_domain = $domain_negotiator->getActiveDomain();
+
+    if ($active_domain && isset($enabled_domains[$active_domain->id()]) && $enabled_domains[$active_domain->id()]) {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+  else {
+    // For non-domain sites, check the simple enabled checkbox.
+    return theme_get_setting('language_switcher_enabled') ?? TRUE;
+  }
+}
+
+/**
  * Helper function to add language switcher data to page variables.
  *
  * @param array &$variables
@@ -1178,6 +1260,11 @@ function _news_theme_add_language_switcher(&$variables) {
 
   // Check if language module is enabled.
   if (!\Drupal::moduleHandler()->moduleExists('language')) {
+    return;
+  }
+
+  // Check if language switcher is enabled for this domain/site.
+  if (!_news_theme_language_switcher_enabled()) {
     return;
   }
 
