@@ -1226,13 +1226,23 @@ function _news_theme_get_top_news_by_category() {
         $color_index = $term->id() % count($color_schemes);
         $colors = $color_schemes[$color_index];
 
-        // Get URL using the node's toUrl method which handles aliases and language.
-        $node_url = $node->toUrl()->toString();
+        // Get URL with explicit language option to ensure proper alias generation.
+        $language_object = \Drupal::languageManager()->getLanguage($current_language);
+        $node_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+          ['node' => $node->id()],
+          [
+            'language' => $language_object,
+            'absolute' => FALSE,
+          ]
+        )->toString();
 
         // Get term URL.
         $term_url = \Drupal\Core\Url::fromRoute('entity.taxonomy_term.canonical',
           ['taxonomy_term' => $term->id()],
-          ['language' => \Drupal::languageManager()->getLanguage($current_language)]
+          [
+            'language' => $language_object,
+            'absolute' => FALSE,
+          ]
         )->toString();
 
         $articles[] = [
@@ -1298,13 +1308,23 @@ function _news_theme_get_top_news_by_category() {
           $color_index = $term->id() % count($color_schemes);
           $colors = $color_schemes[$color_index];
 
-          // Get URL using the node's toUrl method which handles aliases and language.
-          $node_url = $node->toUrl()->toString();
+          // Get URL with explicit language option to ensure proper alias generation.
+          $language_object = \Drupal::languageManager()->getLanguage($current_language);
+          $node_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+            ['node' => $node->id()],
+            [
+              'language' => $language_object,
+              'absolute' => FALSE,
+            ]
+          )->toString();
 
           // Get term URL.
           $term_url = \Drupal\Core\Url::fromRoute('entity.taxonomy_term.canonical',
             ['taxonomy_term' => $term->id()],
-            ['language' => \Drupal::languageManager()->getLanguage($current_language)]
+            [
+              'language' => $language_object,
+              'absolute' => FALSE,
+            ]
           )->toString();
 
           $articles[] = [
@@ -1487,7 +1507,22 @@ function news_theme_views_query_alter(\Drupal\views\ViewExecutable $view, \Drupa
   $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
 
   // Add a WHERE condition directly to the query to filter by current language.
-  // Using the correct table alias from the query.
-  $table_alias = $query->ensureTable('node_field_data');
-  $query->addWhere(1, "$table_alias.langcode", $current_language, '=');
+  // Use group 0 (default group) with AND operator.
+  foreach ($query->where as &$condition_group) {
+    // Check if langcode filter already exists in this group
+    $has_langcode = FALSE;
+    foreach ($condition_group['conditions'] as $condition) {
+      if (is_array($condition) && isset($condition['field']) &&
+          (strpos($condition['field'], '.langcode') !== FALSE || $condition['field'] === 'langcode')) {
+        $has_langcode = TRUE;
+        break;
+      }
+    }
+    if ($has_langcode) {
+      return; // Already filtered, don't add duplicate
+    }
+  }
+
+  // Add the language filter to the main WHERE group (0).
+  $query->addWhere(0, 'node_field_data.langcode', $current_language, '=');
 }
