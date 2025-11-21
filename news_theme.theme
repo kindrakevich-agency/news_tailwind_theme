@@ -1226,23 +1226,20 @@ function _news_theme_get_top_news_by_category() {
         $color_index = $term->id() % count($color_schemes);
         $colors = $color_schemes[$color_index];
 
-        // Get URL with alias using path alias manager.
-        $path_alias_manager = \Drupal::service('path_alias.manager');
-        $node_path = '/node/' . $node->id();
-        $node_alias = $path_alias_manager->getAliasByPath($node_path, $current_language);
+        // Get URL using the node's toUrl method which handles aliases and language.
+        $node_url = $node->toUrl()->toString();
 
-        $term_path = '/taxonomy/term/' . $term->id();
-        $term_alias = $path_alias_manager->getAliasByPath($term_path, $current_language);
-
-        // Add language prefix if not default language.
-        $default_language = \Drupal::languageManager()->getDefaultLanguage()->getId();
-        $language_prefix = ($current_language !== $default_language) ? '/' . $current_language : '';
+        // Get term URL.
+        $term_url = \Drupal\Core\Url::fromRoute('entity.taxonomy_term.canonical',
+          ['taxonomy_term' => $term->id()],
+          ['language' => \Drupal::languageManager()->getLanguage($current_language)]
+        )->toString();
 
         $articles[] = [
           'title' => $node->getTitle(),
-          'url' => $language_prefix . $node_alias,
+          'url' => $node_url,
           'category_name' => $term_name,
-          'category_url' => $language_prefix . $term_alias,
+          'category_url' => $term_url,
           'created' => $node->getCreatedTime(),
           'category_bg' => $colors['bg'],
           'category_text' => $colors['text'],
@@ -1301,23 +1298,20 @@ function _news_theme_get_top_news_by_category() {
           $color_index = $term->id() % count($color_schemes);
           $colors = $color_schemes[$color_index];
 
-          // Get URL with alias using path alias manager.
-          $path_alias_manager = \Drupal::service('path_alias.manager');
-          $node_path = '/node/' . $node->id();
-          $node_alias = $path_alias_manager->getAliasByPath($node_path, $current_language);
+          // Get URL using the node's toUrl method which handles aliases and language.
+          $node_url = $node->toUrl()->toString();
 
-          $term_path = '/taxonomy/term/' . $term->id();
-          $term_alias = $path_alias_manager->getAliasByPath($term_path, $current_language);
-
-          // Add language prefix if not default language.
-          $default_language = \Drupal::languageManager()->getDefaultLanguage()->getId();
-          $language_prefix = ($current_language !== $default_language) ? '/' . $current_language : '';
+          // Get term URL.
+          $term_url = \Drupal\Core\Url::fromRoute('entity.taxonomy_term.canonical',
+            ['taxonomy_term' => $term->id()],
+            ['language' => \Drupal::languageManager()->getLanguage($current_language)]
+          )->toString();
 
           $articles[] = [
             'title' => $node->getTitle(),
-            'url' => $language_prefix . $node_alias,
+            'url' => $node_url,
             'category_name' => $term_name,
-            'category_url' => $language_prefix . $term_alias,
+            'category_url' => $term_url,
             'created' => $node->getCreatedTime(),
             'category_bg' => $colors['bg'],
             'category_text' => $colors['text'],
@@ -1474,67 +1468,26 @@ function _news_theme_add_language_switcher(&$variables) {
 }
 
 /**
- * Implements hook_views_pre_view().
+ * Implements hook_views_query_alter().
  *
  * Filter node views by current language.
  */
-function news_theme_views_pre_view(\Drupal\views\ViewExecutable $view, $display_id, array &$args) {
-  // Check if this view is displaying nodes.
-  $base_table = $view->storage->get('base_table');
-  if ($base_table !== 'node_field_data') {
+function news_theme_views_query_alter(\Drupal\views\ViewExecutable $view, \Drupal\views\Plugin\views\query\QueryPluginBase $query) {
+  // Only apply to SQL-based queries.
+  if (!($query instanceof \Drupal\views\Plugin\views\query\Sql)) {
+    return;
+  }
+
+  // Only apply to node-based views.
+  if ($view->storage->get('base_table') !== 'node_field_data') {
     return;
   }
 
   // Get current language.
-  $language_manager = \Drupal::languageManager();
-  $current_language = $language_manager->getCurrentLanguage()->getId();
+  $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
 
-  // Add a filter for the current language.
-  $filters = $view->display_handler->getOption('filters');
-
-  // Add langcode filter if it doesn't already exist.
-  if (!isset($filters['langcode'])) {
-    $filters['langcode'] = [
-      'id' => 'langcode',
-      'table' => 'node_field_data',
-      'field' => 'langcode',
-      'relationship' => 'none',
-      'group_type' => 'group',
-      'admin_label' => '',
-      'operator' => 'in',
-      'value' => [$current_language => $current_language],
-      'group' => 1,
-      'exposed' => FALSE,
-      'expose' => [
-        'operator_id' => '',
-        'label' => '',
-        'description' => '',
-        'use_operator' => FALSE,
-        'operator' => '',
-        'identifier' => '',
-        'required' => FALSE,
-        'remember' => FALSE,
-        'multiple' => FALSE,
-        'remember_roles' => [
-          'authenticated' => 'authenticated',
-        ],
-      ],
-      'is_grouped' => FALSE,
-      'group_info' => [
-        'label' => '',
-        'description' => '',
-        'identifier' => '',
-        'optional' => TRUE,
-        'widget' => 'select',
-        'multiple' => FALSE,
-        'remember' => FALSE,
-        'default_group' => 'All',
-        'default_group_multiple' => [],
-        'group_items' => [],
-      ],
-      'plugin_id' => 'language',
-    ];
-
-    $view->display_handler->setOption('filters', $filters);
-  }
+  // Add a WHERE condition directly to the query to filter by current language.
+  // Using the correct table alias from the query.
+  $table_alias = $query->ensureTable('node_field_data');
+  $query->addWhere(1, "$table_alias.langcode", $current_language, '=');
 }
