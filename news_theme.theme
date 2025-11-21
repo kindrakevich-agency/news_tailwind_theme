@@ -145,6 +145,14 @@ function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface 
       '#default_value' => theme_get_setting('language_switcher_enabled') ?? TRUE,
     ];
   }
+
+  // Anonymous user setting.
+  $form['language_settings']['language_switcher_hide_anonymous'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Hide language switcher for anonymous users'),
+    '#description' => t('When enabled, the language switcher will only be visible to logged-in users.'),
+    '#default_value' => theme_get_setting('language_switcher_hide_anonymous') ?? FALSE,
+  ];
 }
 
 /**
@@ -464,12 +472,25 @@ function news_theme_preprocess_field(&$variables) {
 function _news_theme_load_tags() {
   $tags = [];
 
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage()->getId();
+
   // Load all terms from the 'tags' vocabulary.
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
   // Count nodes for each term and prepare array.
   foreach ($terms as $term) {
+    // Get translated term if available.
+    if ($term->hasTranslation($current_language)) {
+      $translated_term = $term->getTranslation($current_language);
+      $term_name = $translated_term->getName();
+    }
+    else {
+      $term_name = $term->getName();
+    }
+
     // Count published article nodes tagged with this term.
     $query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
@@ -480,7 +501,7 @@ function _news_theme_load_tags() {
 
     $tags[] = [
       'id' => $term->id(),
-      'name' => $term->getName(),
+      'name' => $term_name,
       'count' => $count,
     ];
   }
@@ -1223,6 +1244,12 @@ function _news_theme_get_domain_options() {
  *   TRUE if language switcher should be displayed, FALSE otherwise.
  */
 function _news_theme_language_switcher_enabled() {
+  // Check if we should hide for anonymous users.
+  $hide_anonymous = theme_get_setting('language_switcher_hide_anonymous') ?? FALSE;
+  if ($hide_anonymous && \Drupal::currentUser()->isAnonymous()) {
+    return FALSE;
+  }
+
   // Check if domain module is enabled.
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $enabled_domains = theme_get_setting('language_switcher_enable_domains') ?: [];
@@ -1281,12 +1308,27 @@ function _news_theme_add_language_switcher(&$variables) {
     'name' => $current_language->getName(),
   ];
 
+  // Check if we're on a node page and filter to available translations.
+  $route_match = \Drupal::routeMatch();
+  $node = $route_match->getParameter('node');
+  $available_langcodes = NULL;
+
+  if ($node && $node instanceof \Drupal\node\NodeInterface) {
+    // Get all available translations for this node.
+    $available_langcodes = array_keys($node->getTranslationLanguages());
+  }
+
   // Only add language switcher if there are multiple languages.
   if (count($languages) > 1) {
-    $route_name = \Drupal::routeMatch()->getRouteName();
-    $route_parameters = \Drupal::routeMatch()->getRawParameters()->all();
+    $route_name = $route_match->getRouteName();
+    $route_parameters = $route_match->getRawParameters()->all();
 
     foreach ($languages as $langcode => $language) {
+      // If on a node page, only show languages with translations.
+      if ($available_langcodes !== NULL && !in_array($langcode, $available_langcodes)) {
+        continue;
+      }
+
       // Get the URL for switching to this language.
       try {
         $url = Url::fromRoute($route_name, $route_parameters, [
