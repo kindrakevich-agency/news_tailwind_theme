@@ -1226,9 +1226,9 @@ function _news_theme_get_top_news_by_category() {
 
         $articles[] = [
           'title' => $node->getTitle(),
-          'url' => Url::fromRoute('entity.node.canonical', ['node' => $node->id()], ['language' => $language_obj])->toString(),
+          'url' => $node->toUrl('canonical', ['language' => $language_obj])->toString(),
           'category_name' => $term_name,
-          'category_url' => Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $term->id()], ['language' => $language_obj])->toString(),
+          'category_url' => $term->toUrl('canonical', ['language' => $language_obj])->toString(),
           'created' => $node->getCreatedTime(),
           'category_bg' => $colors['bg'],
           'category_text' => $colors['text'],
@@ -1292,9 +1292,9 @@ function _news_theme_get_top_news_by_category() {
 
           $articles[] = [
             'title' => $node->getTitle(),
-            'url' => Url::fromRoute('entity.node.canonical', ['node' => $node->id()], ['language' => $language_obj])->toString(),
+            'url' => $node->toUrl('canonical', ['language' => $language_obj])->toString(),
             'category_name' => $term_name,
-            'category_url' => Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $term->id()], ['language' => $language_obj])->toString(),
+            'category_url' => $term->toUrl('canonical', ['language' => $language_obj])->toString(),
             'created' => $node->getCreatedTime(),
             'category_bg' => $colors['bg'],
             'category_text' => $colors['text'],
@@ -1471,19 +1471,31 @@ function news_theme_views_query_alter(\Drupal\views\ViewExecutable $view, \Drupa
   $language_manager = \Drupal::languageManager();
   $current_language = $language_manager->getCurrentLanguage()->getId();
 
-  // Find the node_field_data table alias.
-  $tables = $query->getTables();
-  $node_table_alias = NULL;
+  // Get the base table alias from the query.
+  $base_field = $view->storage->get('base_field');
+  if (!$base_field) {
+    $base_field = 'nid';
+  }
 
+  // Add language condition using the base table.
+  // The base table in Views is usually aliased, so we need to get the proper alias.
+  $configuration = $view->storage->get('display');
+
+  // Get all tables to find the base table alias.
+  $tables = $query->getTables();
+  $base_table_alias = NULL;
+
+  // The first table is usually the base table.
   foreach ($tables as $alias => $table_info) {
     if (isset($table_info['table']) && $table_info['table'] === 'node_field_data') {
-      $node_table_alias = $alias;
+      $base_table_alias = $alias;
       break;
     }
   }
 
-  // Add language condition if we found the table.
-  if ($node_table_alias) {
-    $query->addWhere(0, $node_table_alias . '.langcode', $current_language, '=');
+  // If we found the base table, add the language filter.
+  if ($base_table_alias) {
+    // Use addWhereExpression to ensure it's added properly.
+    $query->addWhereExpression(0, "$base_table_alias.langcode = :langcode", [':langcode' => $current_language]);
   }
 }
