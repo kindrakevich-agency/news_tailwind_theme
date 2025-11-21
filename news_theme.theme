@@ -118,6 +118,33 @@ function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface 
     '#default_value' => theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN',
     '#description' => t('The header text displayed above the featured article section on the homepage.'),
   ];
+
+  // Language switcher settings.
+  $form['language_settings'] = [
+    '#type' => 'details',
+    '#title' => t('Language Switcher Settings'),
+    '#open' => FALSE,
+    '#description' => t('Configure language switcher visibility. The language switcher will only appear when multiple languages are enabled in Drupal.'),
+  ];
+
+  // Check if domain module is enabled.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $form['language_settings']['language_switcher_enable_domains'] = [
+      '#type' => 'checkboxes',
+      '#title' => t('Enable language switcher for domains'),
+      '#description' => t('Select the domains where the language switcher should be displayed. The language switcher will only be shown on the selected domains.'),
+      '#options' => _news_theme_get_domain_options(),
+      '#default_value' => theme_get_setting('language_switcher_enable_domains') ?: [],
+    ];
+  }
+  else {
+    $form['language_settings']['language_switcher_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Enable language switcher'),
+      '#description' => t('Show the language switcher in the header when multiple languages are available.'),
+      '#default_value' => theme_get_setting('language_switcher_enabled') ?? TRUE,
+    ];
+  }
 }
 
 /**
@@ -138,10 +165,15 @@ function news_theme_preprocess_page(&$variables) {
   // Check if we're on a taxonomy term page and pass the current term.
   $route_match = \Drupal::routeMatch();
   $variables['current_term'] = NULL;
+  $variables['term_description'] = NULL;
   if ($route_match->getRouteName() == 'entity.taxonomy_term.canonical') {
     $term = $route_match->getParameter('taxonomy_term');
     if ($term) {
       $variables['current_term'] = $term;
+      // Get term description if available.
+      if ($term->hasField('description') && !$term->get('description')->isEmpty()) {
+        $variables['term_description'] = $term->get('description')->value;
+      }
     }
   }
 
@@ -167,6 +199,9 @@ function news_theme_preprocess_page(&$variables) {
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
+
+  // Add language switcher data.
+  _news_theme_add_language_switcher($variables);
 
   // Load newsletter settings and featured articles for frontpage.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
@@ -1156,4 +1191,124 @@ function _news_theme_get_top_news_by_category() {
   }
 
   return $articles;
+}
+
+/**
+ * Helper function to get domain options for theme settings.
+ *
+ * @return array
+ *   Array of domain options keyed by domain ID.
+ */
+function _news_theme_get_domain_options() {
+  $options = [];
+
+  if (!\Drupal::moduleHandler()->moduleExists('domain')) {
+    return $options;
+  }
+
+  $domain_storage = \Drupal::entityTypeManager()->getStorage('domain');
+  $domains = $domain_storage->loadMultiple();
+
+  foreach ($domains as $domain) {
+    $options[$domain->id()] = $domain->label() . ' (' . $domain->getHostname() . ')';
+  }
+
+  return $options;
+}
+
+/**
+ * Helper function to check if language switcher should be shown.
+ *
+ * @return bool
+ *   TRUE if language switcher should be displayed, FALSE otherwise.
+ */
+function _news_theme_language_switcher_enabled() {
+  // Check if domain module is enabled.
+  if (\Drupal::moduleHandler()->moduleExists('domain')) {
+    $enabled_domains = theme_get_setting('language_switcher_enable_domains') ?: [];
+
+    // Filter out unchecked domains (value 0).
+    $enabled_domains = array_filter($enabled_domains);
+
+    // If no domains are selected, don't show language switcher.
+    if (empty($enabled_domains)) {
+      return FALSE;
+    }
+
+    // Check if current domain is in the enabled list.
+    $domain_negotiator = \Drupal::service('domain.negotiator');
+    $active_domain = $domain_negotiator->getActiveDomain();
+
+    if ($active_domain && in_array($active_domain->id(), array_keys($enabled_domains))) {
+      return TRUE;
+    }
+
+    return FALSE;
+  }
+  else {
+    // For non-domain sites, check the simple enabled checkbox.
+    return theme_get_setting('language_switcher_enabled') ?? TRUE;
+  }
+}
+
+/**
+ * Helper function to add language switcher data to page variables.
+ *
+ * @param array &$variables
+ *   The variables array to add language data to.
+ */
+function _news_theme_add_language_switcher(&$variables) {
+  $variables['languages'] = [];
+  $variables['current_language'] = [];
+
+  // Check if language module is enabled.
+  if (!\Drupal::moduleHandler()->moduleExists('language')) {
+    return;
+  }
+
+  // Check if language switcher is enabled for this domain/site.
+  if (!_news_theme_language_switcher_enabled()) {
+    return;
+  }
+
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+  $languages = $language_manager->getLanguages();
+
+  // Add current language info.
+  $variables['current_language'] = [
+    'id' => $current_language->getId(),
+    'name' => $current_language->getName(),
+  ];
+
+  // Only add language switcher if there are multiple languages.
+  if (count($languages) > 1) {
+    $route_name = \Drupal::routeMatch()->getRouteName();
+    $route_parameters = \Drupal::routeMatch()->getRawParameters()->all();
+
+    foreach ($languages as $langcode => $language) {
+      // Get the URL for switching to this language.
+      try {
+        $url = Url::fromRoute($route_name, $route_parameters, [
+          'language' => $language,
+        ])->toString();
+      }
+      catch (\Exception $e) {
+        // Fallback to homepage if route doesn't exist.
+        $url = Url::fromRoute('<front>', [], [
+          'language' => $language,
+        ])->toString();
+      }
+
+      $variables['languages'][$langcode] = [
+        'name' => $language->getName(),
+        'id' => $language->getId(),
+        'url' => $url,
+        'is_current' => ($langcode === $current_language->getId()),
+      ];
+    }
+  }
+
+  // Add cache contexts for language.
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
 }

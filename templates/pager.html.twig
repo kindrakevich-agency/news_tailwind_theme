@@ -9,10 +9,10 @@
  */
 #}
 {% if items %}
-    <nav class="flex items-center justify-center space-x-2 my-4 md:my-12" role="navigation" aria-label="Pagination">
+    <nav class="flex items-center justify-center space-x-2 my-4 md:my-12" role="navigation" aria-label="{{ 'Pagination'|t }}">
         {# Previous button #}
         {% if items.previous %}
-            <a href="{{ items.previous.href }}" class="px-6 py-4 md:px-4 md:py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" rel="prev">
+            <a href="{{ items.previous.href }}" class="px-6 py-4 md:px-4 md:py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" rel="prev" aria-label="{{ 'Previous page'|t }}">
                 <svg class="w-8 h-8 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                 </svg>
@@ -40,7 +40,7 @@
 
         {# Next button #}
         {% if items.next %}
-            <a href="{{ items.next.href }}" class="px-6 py-4 md:px-4 md:py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" rel="next">
+            <a href="{{ items.next.href }}" class="px-6 py-4 md:px-4 md:py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" rel="next" aria-label="{{ 'Next page'|t }}">
                 <svg class="w-8 h-8 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                 </svg>

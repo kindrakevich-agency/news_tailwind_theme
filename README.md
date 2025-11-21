@@ -17,6 +17,7 @@ A modern, responsive news website theme built with Tailwind CSS for Drupal 11.
 ## Requirements
 
 - Drupal 11 (or Drupal 10)
+- Node.js and npm (for building Tailwind CSS)
 - Article content type with the following fields:
   - `field_tags` (Taxonomy term reference to 'tags' vocabulary)
   - `field_image` (Image field, multiple values - only first image is displayed)
@@ -25,11 +26,18 @@ A modern, responsive news website theme built with Tailwind CSS for Drupal 11.
 ## Installation
 
 1. Copy the theme to your Drupal installation:
-   ```
+   ```bash
    cp -r news_theme /path/to/drupal/themes/custom/
    ```
 
-2. Enable the theme (this will automatically install the required views and set the homepage):
+2. Install dependencies and build the CSS:
+   ```bash
+   cd /path/to/drupal/themes/custom/news_theme
+   npm install
+   npm run build
+   ```
+
+3. Enable the theme (this will automatically install the required views and set the homepage):
    ```bash
    drush theme:enable news_theme
    drush config:set system.theme default news_theme
@@ -124,7 +132,9 @@ news_theme/
 │       ├── views.view.frontpage_articles.yml      # Frontpage view config
 │       └── views.view.taxonomy_term_articles.yml  # Taxonomy term view config
 ├── css/
-│   └── style.css                                  # Custom CSS styles
+│   ├── src/
+│   │   └── input.css                              # Source CSS with Tailwind directives
+│   └── style.css                                  # Compiled/minified CSS output
 ├── js/                                            # JavaScript files (if needed)
 ├── templates/
 │   ├── includes/
@@ -145,6 +155,9 @@ news_theme/
 ├── news_theme.install                             # Install/uninstall hooks
 ├── news_theme.libraries.yml                       # Asset libraries
 ├── news_theme.theme                               # Theme functions
+├── package.json                                   # Node.js dependencies
+├── tailwind.config.js                             # Tailwind CSS configuration
+├── .gitignore                                     # Git ignore rules
 └── README.md                                      # This file
 ```
 
@@ -167,11 +180,30 @@ You can customize:
 
 ### Styling
 
-The theme uses Tailwind CSS via CDN. Custom styles can be added to `css/style.css`.
+The theme uses Tailwind CSS with a build process for optimized performance.
 
-Key CSS classes:
-- `.masonry` - Masonry grid layout
-- `.scrollbar-hide` - Hide scrollbars while maintaining functionality
+**Working with styles:**
+1. Edit `css/src/input.css` to modify styles (not `css/style.css` directly)
+2. Run the build command to compile changes:
+   ```bash
+   npm run build    # Production build (minified)
+   npm run watch    # Development mode (auto-compile on save)
+   ```
+
+**Available build commands:**
+- `npm run build` - Compiles and minifies CSS for production
+- `npm run watch` - Watches for changes and auto-compiles during development
+- `npm run dev` - Alias for `npm run watch`
+
+**Key CSS classes:**
+- `.masonry` - Masonry grid layout (custom)
+- `.scrollbar-hide` - Hide scrollbars while maintaining functionality (custom)
+- All Tailwind utility classes (e.g., `bg-blue-500`, `text-center`, etc.)
+
+**How it works:**
+- Tailwind scans your templates and only includes the CSS classes you actually use
+- Custom styles in `css/src/input.css` are combined with Tailwind utilities
+- Final output is minified and optimized (~32KB for production)
 
 ### Color Schemes
 
@@ -181,6 +213,60 @@ Tag colors can be customized in `templates/field--field-tags.html.twig`. Availab
 - `bg-blue-100 text-blue-800`
 - `bg-green-100 text-green-800`
 - etc.
+
+## Development Workflow
+
+### Setting Up for Development
+
+1. Clone or copy the theme to your Drupal installation
+2. Install Node.js dependencies:
+   ```bash
+   cd /path/to/themes/custom/news_theme
+   npm install
+   ```
+
+### Making Style Changes
+
+**For CSS modifications:**
+1. Start the watch process:
+   ```bash
+   npm run watch
+   ```
+2. Edit `css/src/input.css` - changes will automatically compile
+3. Refresh your browser to see the changes
+4. When done, press Ctrl+C to stop the watch process
+
+**For production deployment:**
+```bash
+npm run build
+```
+This creates an optimized, minified CSS file.
+
+### Making Template Changes
+
+1. Edit any `.html.twig` file in the `templates/` directory
+2. Clear Drupal cache:
+   ```bash
+   drush cr
+   ```
+3. Refresh your browser to see the changes
+
+### Adding New Tailwind Classes
+
+When you add new Tailwind utility classes to your templates:
+1. The classes will automatically be included in the compiled CSS
+2. If using `npm run watch`, they'll be added immediately
+3. If not, run `npm run build` to regenerate the CSS
+
+### File Structure for Development
+
+**Don't edit directly:**
+- `css/style.css` - This is auto-generated and will be overwritten
+
+**Edit these files:**
+- `css/src/input.css` - Add custom CSS and Tailwind directives here
+- `templates/**/*.html.twig` - Modify markup and add Tailwind classes
+- `tailwind.config.js` - Configure Tailwind settings (colors, fonts, etc.)
 
 ## Template Files Explained
 
@@ -229,6 +315,28 @@ The theme includes several mobile-specific optimizations:
 
 ## Troubleshooting
 
+### CSS Styles Not Updating
+If your CSS changes aren't appearing:
+1. Make sure you're editing `css/src/input.css`, not `css/style.css`
+2. Run `npm run build` to compile the CSS
+3. Clear Drupal cache: `drush cr`
+4. Clear browser cache (Ctrl+Shift+R or Cmd+Shift+R)
+5. Check that `css/style.css` was regenerated (check the file timestamp)
+
+### npm install Fails
+If you get errors during `npm install`:
+1. Ensure Node.js version 14 or higher is installed: `node --version`
+2. Update npm: `npm install -g npm@latest`
+3. Clear npm cache: `npm cache clean --force`
+4. Delete `node_modules` folder and `package-lock.json`, then try again
+
+### Tailwind Classes Not Working
+If Tailwind utility classes aren't being applied:
+1. Rebuild the CSS: `npm run build`
+2. Check that the classes are in your templates (`.html.twig` files)
+3. Verify `tailwind.config.js` includes the correct template paths
+4. Clear both Drupal and browser cache
+
 ### Tags Not Showing in Header
 Make sure:
 1. The taxonomy vocabulary machine name is exactly `tags`
@@ -237,8 +345,9 @@ Make sure:
 
 ### Masonry Layout Not Working
 1. Clear browser cache
-2. Check that `css/style.css` is loading
-3. Verify Tailwind CDN is accessible
+2. Check that `css/style.css` is loading and is not empty
+3. Rebuild CSS: `npm run build`
+4. Clear Drupal cache: `drush cr`
 
 ### Images Not Displaying
 1. Check field name is `field_image`
