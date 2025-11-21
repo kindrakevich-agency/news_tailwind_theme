@@ -281,8 +281,12 @@ function news_theme_preprocess_node(&$variables) {
   else {
     $author_name = $author->getDisplayName();
 
-    // Transliterate author name.
-    if (\Drupal::hasService('transliteration')) {
+    // Transliterate author name only if NOT in default language.
+    $language_manager = \Drupal::languageManager();
+    $current_language = $language_manager->getCurrentLanguage()->getId();
+    $default_language = $language_manager->getDefaultLanguage()->getId();
+
+    if ($current_language !== $default_language && \Drupal::hasService('transliteration')) {
       $transliteration = \Drupal::transliteration();
       $variables['author_name'] = $transliteration->transliterate($author_name);
     }
@@ -951,9 +955,10 @@ function _news_theme_get_newsletter_articles() {
       $featured = $nodes[1];
       $author = $featured->getOwner();
 
-      // Transliterate author name.
+      // Transliterate author name only if NOT in default language.
       $author_name = $author->getDisplayName();
-      if (\Drupal::hasService('transliteration')) {
+      $default_language = $language_manager->getDefaultLanguage()->getId();
+      if ($current_language !== $default_language && \Drupal::hasService('transliteration')) {
         $transliteration = \Drupal::transliteration();
         $author_name = $transliteration->transliterate($author_name);
       }
