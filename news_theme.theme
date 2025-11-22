@@ -1632,6 +1632,9 @@ function _news_theme_add_language_switcher(&$variables) {
     $route_name = $route_match->getRouteName();
     $route_parameters = $route_match->getRawParameters()->all();
 
+    // Check if we're on the front page.
+    $is_front = \Drupal::service('path.matcher')->isFrontPage();
+
     foreach ($languages as $langcode => $language) {
       // If on a node page, only show languages with translations.
       if ($available_langcodes !== NULL && !in_array($langcode, $available_langcodes)) {
@@ -1640,9 +1643,17 @@ function _news_theme_add_language_switcher(&$variables) {
 
       // Get the URL for switching to this language.
       try {
-        $url = Url::fromRoute($route_name, $route_parameters, [
-          'language' => $language,
-        ])->toString();
+        // If on front page, use <front> route to get clean URLs like /en, /es
+        if ($is_front) {
+          $url = Url::fromRoute('<front>', [], [
+            'language' => $language,
+          ])->toString();
+        }
+        else {
+          $url = Url::fromRoute($route_name, $route_parameters, [
+            'language' => $language,
+          ])->toString();
+        }
       }
       catch (\Exception $e) {
         // Fallback to homepage if route doesn't exist.
