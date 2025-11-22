@@ -145,6 +145,14 @@ function news_theme_form_system_theme_settings_alter(&$form, FormStateInterface 
       '#default_value' => theme_get_setting('language_switcher_enabled') ?? TRUE,
     ];
   }
+
+  // Anonymous user setting.
+  $form['language_settings']['language_switcher_hide_anonymous'] = [
+    '#type' => 'checkbox',
+    '#title' => t('Hide language switcher for anonymous users'),
+    '#description' => t('When enabled, the language switcher will only be visible to logged-in users.'),
+    '#default_value' => theme_get_setting('language_switcher_hide_anonymous') ?? FALSE,
+  ];
 }
 
 /**
@@ -177,9 +185,16 @@ function news_theme_preprocess_page(&$variables) {
     }
   }
 
-  // Load footer settings.
+  // Load footer settings with language support.
+  // Get config with language override for translatable fields.
+  $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $config = \Drupal::config('news_theme.settings');
+
+  // Get language-specific config override if available.
+  $language_config = \Drupal::languageManager()->getLanguageConfigOverride($current_language, 'news_theme.settings');
+
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
-  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_description'] = $language_config->get('footer_description') ?: $config->get('footer_description') ?: theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
   $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
   $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
   $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
@@ -205,7 +220,12 @@ function news_theme_preprocess_page(&$variables) {
 
   // Load newsletter settings and featured articles for frontpage.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
-    $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
+    // Get language-specific newsletter header if available.
+    $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $config = \Drupal::config('news_theme.settings');
+    $language_config = \Drupal::languageManager()->getLanguageConfigOverride($current_language, 'news_theme.settings');
+
+    $variables['newsletter_header'] = $language_config->get('newsletter_header') ?: $config->get('newsletter_header') ?: theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
     $variables['newsletter_data'] = _news_theme_get_newsletter_articles();
     $variables['exchange_rates'] = _news_theme_get_exchange_rates();
     $variables['top_news_by_category'] = _news_theme_get_top_news_by_category();
@@ -230,9 +250,16 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
   $request = \Drupal::request();
   $variables['search_query'] = $request->query->get('keys') ?: '';
 
-  // Load footer settings.
+  // Load footer settings with language support.
+  // Get config with language override for translatable fields.
+  $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $config = \Drupal::config('news_theme.settings');
+
+  // Get language-specific config override if available.
+  $language_config = \Drupal::languageManager()->getLanguageConfigOverride($current_language, 'news_theme.settings');
+
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
-  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_description'] = $language_config->get('footer_description') ?: $config->get('footer_description') ?: theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
   $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
   $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
   $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
@@ -261,6 +288,32 @@ function news_theme_preprocess_node(&$variables) {
   /** @var \Drupal\node\NodeInterface $node */
   $node = $variables['node'];
 
+  // Generate language-aware URL for the node.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+
+  // Get the translated node if available.
+  $translated_node = $node;
+  if ($node->hasTranslation($current_language->getId())) {
+    $translated_node = $node->getTranslation($current_language->getId());
+  }
+
+  // Generate URL with explicit language option.
+  $variables['url'] = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+    ['node' => $translated_node->id()],
+    [
+      'language' => $current_language,
+      'absolute' => FALSE,
+    ]
+  )->toString();
+
+  // Add language cache context to ensure URLs are cached per language.
+  if (!isset($variables['#cache']['contexts'])) {
+    $variables['#cache']['contexts'] = [];
+  }
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
+  $variables['#cache']['contexts'][] = 'languages:language_content';
+
   // Add author name and avatar.
   $author = $node->getOwner();
 
@@ -271,7 +324,20 @@ function news_theme_preprocess_node(&$variables) {
     $variables['author_initial'] = 'A';
   }
   else {
-    $variables['author_name'] = $author->getDisplayName();
+    $author_name = $author->getDisplayName();
+
+    // Transliterate author name only if NOT in default language.
+    $language_manager = \Drupal::languageManager();
+    $current_language = $language_manager->getCurrentLanguage()->getId();
+    $default_language = $language_manager->getDefaultLanguage()->getId();
+
+    if ($current_language !== $default_language && \Drupal::hasService('transliteration')) {
+      $transliteration = \Drupal::transliteration();
+      $variables['author_name'] = $transliteration->transliterate($author_name);
+    }
+    else {
+      $variables['author_name'] = $author_name;
+    }
 
     // Check if user has field_avatar field.
     if ($author->hasField('field_avatar') && !$author->get('field_avatar')->isEmpty()) {
@@ -288,8 +354,7 @@ function news_theme_preprocess_node(&$variables) {
     }
 
     // Get first letter of author name for initial.
-    $name = $author->getDisplayName();
-    $variables['author_initial'] = mb_strtoupper(mb_substr($name, 0, 1));
+    $variables['author_initial'] = mb_strtoupper(mb_substr($variables['author_name'], 0, 1));
   }
 
   // Add formatted date.
@@ -389,12 +454,30 @@ function news_theme_preprocess_node(&$variables) {
     // Get article tags for display.
     $variables['article_tags'] = [];
     if ($node->hasField('field_tags') && !$node->get('field_tags')->isEmpty()) {
+      // Get current language.
+      $language_manager = \Drupal::languageManager();
+      $current_language = $language_manager->getCurrentLanguage();
+      $current_language_id = $current_language->getId();
+
       foreach ($node->get('field_tags') as $tag_item) {
         $term = $tag_item->entity;
         if ($term) {
+          // Get translated term name.
+          $term_name = $term->getName();
+          if ($term->hasTranslation($current_language_id)) {
+            $translated_term = $term->getTranslation($current_language_id);
+            $term_name = $translated_term->getName();
+          }
+
+          // Generate URL with language prefix.
+          $url = Url::fromRoute('entity.taxonomy_term.canonical',
+            ['taxonomy_term' => $term->id()],
+            ['language' => $current_language]
+          )->toString();
+
           $variables['article_tags'][] = [
-            'name' => $term->getName(),
-            'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+            'name' => $term_name,
+            'url' => $url,
           ];
         }
       }
@@ -417,8 +500,27 @@ function news_theme_preprocess_node(&$variables) {
 function news_theme_preprocess_field(&$variables) {
   $element = $variables['element'];
 
+  // Remove link from image field in teaser view mode.
+  // The teaser template already wraps the image with the correct language-aware link.
+  if ($element['#field_name'] == 'field_image' && $element['#view_mode'] == 'teaser') {
+    foreach ($variables['items'] as $delta => $item) {
+      // Remove the url from the image formatter if it exists.
+      if (isset($variables['items'][$delta]['content']['#url'])) {
+        unset($variables['items'][$delta]['content']['#url']);
+      }
+      // Also remove any link type settings.
+      if (isset($variables['items'][$delta]['content']['#image_style'])) {
+        $variables['items'][$delta]['content']['#type'] = 'image';
+      }
+    }
+  }
+
   // Format tags field as links.
   if ($element['#field_name'] == 'field_tags') {
+    // Get current language.
+    $language_manager = \Drupal::languageManager();
+    $current_language = $language_manager->getCurrentLanguage()->getId();
+
     // Define color schemes for tags.
     $color_schemes = [
       ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
@@ -437,9 +539,16 @@ function news_theme_preprocess_field(&$variables) {
         $tid = $element['#items'][$delta]->target_id;
         $term = Term::load($tid);
         if ($term) {
+          // Get translated term name.
+          $term_name = $term->getName();
+          if ($term->hasTranslation($current_language)) {
+            $translated_term = $term->getTranslation($current_language);
+            $term_name = $translated_term->getName();
+          }
+
           // Set URL and title for the tag link.
           $variables['items'][$delta]['content']['#url'] = Url::fromRoute('entity.taxonomy_term.canonical', ['taxonomy_term' => $tid]);
-          $variables['items'][$delta]['content']['#title'] = $term->getName();
+          $variables['items'][$delta]['content']['#title'] = $term_name;
 
           // Assign a consistent color based on term ID.
           $color_index = $tid % count($color_schemes);
@@ -464,12 +573,25 @@ function news_theme_preprocess_field(&$variables) {
 function _news_theme_load_tags() {
   $tags = [];
 
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage()->getId();
+
   // Load all terms from the 'tags' vocabulary.
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
   // Count nodes for each term and prepare array.
   foreach ($terms as $term) {
+    // Get translated term if available.
+    if ($term->hasTranslation($current_language)) {
+      $translated_term = $term->getTranslation($current_language);
+      $term_name = $translated_term->getName();
+    }
+    else {
+      $term_name = $term->getName();
+    }
+
     // Count published article nodes tagged with this term.
     $query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
@@ -480,7 +602,7 @@ function _news_theme_load_tags() {
 
     $tags[] = [
       'id' => $term->id(),
-      'name' => $term->getName(),
+      'name' => $term_name,
       'count' => $count,
     ];
   }
@@ -610,6 +732,10 @@ function _news_theme_get_prev_next_articles($current_node) {
     return $result;
   }
 
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+
   $current_created = $current_node->getCreatedTime();
   $current_nid = $current_node->id();
 
@@ -629,8 +755,22 @@ function _news_theme_get_prev_next_articles($current_node) {
     $prev_nid = reset($nids_prev);
     $prev_node = Node::load($prev_nid);
     if ($prev_node) {
+      // Get translated node if available.
+      if ($prev_node->hasTranslation($current_language->getId())) {
+        $prev_node = $prev_node->getTranslation($current_language->getId());
+      }
+
+      // Generate URL with explicit language option.
+      $prev_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $prev_node->id()],
+        [
+          'language' => $current_language,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['prev'] = [
-        'url' => $prev_node->toUrl()->toString(),
+        'url' => $prev_url,
         'title' => $prev_node->getTitle(),
       ];
     }
@@ -652,8 +792,22 @@ function _news_theme_get_prev_next_articles($current_node) {
     $next_nid = reset($nids_next);
     $next_node = Node::load($next_nid);
     if ($next_node) {
+      // Get translated node if available.
+      if ($next_node->hasTranslation($current_language->getId())) {
+        $next_node = $next_node->getTranslation($current_language->getId());
+      }
+
+      // Generate URL with explicit language option.
+      $next_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $next_node->id()],
+        [
+          'language' => $current_language,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['next'] = [
-        'url' => $next_node->toUrl()->toString(),
+        'url' => $next_url,
         'title' => $next_node->getTitle(),
       ];
     }
@@ -684,12 +838,17 @@ function _news_theme_get_related_articles($current_node) {
 
   $current_nid = $current_node->id();
 
-  // Query for related articles.
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage()->getId();
+
+  // Query for related articles in current language.
   $query = \Drupal::entityQuery('node')
     ->condition('type', 'article')
     ->condition('status', 1)
     ->condition('nid', $current_nid, '!=')
     ->condition('field_tags', $tag_ids, 'IN')
+    ->condition('langcode', $current_language)
     ->sort('created', 'DESC')
     ->range(0, 10)
     ->accessCheck(TRUE);
@@ -855,42 +1014,87 @@ function _news_theme_get_newsletter_articles() {
     'featured_article' => NULL,
   ];
 
-  // Query for the latest 2 published articles.
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage()->getId();
+
+  // Query for latest published articles (get more than 2 to filter for translations).
+  // Don't filter by langcode - we want articles that HAVE translations, not just created in this language.
   $query = \Drupal::entityQuery('node')
     ->condition('type', 'article')
     ->condition('status', 1)
     ->sort('created', 'DESC')
-    ->range(0, 2)
+    ->range(0, 20)
     ->accessCheck(TRUE);
 
   $nids = $query->execute();
 
-  if (count($nids) >= 2) {
+  // Filter to find articles with translations in current language.
+  $translated_nodes = [];
+  if (!empty($nids)) {
     $nodes = Node::loadMultiple($nids);
-    $nodes = array_values($nodes);
+    foreach ($nodes as $node) {
+      // Check if node has translation in current language.
+      if ($node->hasTranslation($current_language)) {
+        $translated_nodes[] = $node->getTranslation($current_language);
+        // Stop when we have 2 articles.
+        if (count($translated_nodes) >= 2) {
+          break;
+        }
+      }
+    }
+  }
+
+  if (count($translated_nodes) >= 2) {
+    $nodes = $translated_nodes;
 
     // First article (latest) - for the tagline.
     if (isset($nodes[0])) {
       $latest = $nodes[0];
+
+      // Generate URL with explicit language option.
+      $language_object = $language_manager->getLanguage($current_language);
+      $latest_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $latest->id()],
+        [
+          'language' => $language_object,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['latest_article'] = [
         'title' => $latest->getTitle(),
-        'url' => $latest->toUrl()->toString(),
+        'url' => $latest_url,
       ];
     }
 
     // Second article - for the featured card.
     if (isset($nodes[1])) {
       $featured = $nodes[1];
+
       $author = $featured->getOwner();
 
-      // Get first tag name if available.
+      // Transliterate author name only if NOT in default language.
+      $author_name = $author->getDisplayName();
+      $default_language = $language_manager->getDefaultLanguage()->getId();
+      if ($current_language !== $default_language && \Drupal::hasService('transliteration')) {
+        $transliteration = \Drupal::transliteration();
+        $author_name = $transliteration->transliterate($author_name);
+      }
+
+      // Get first tag name if available (in current language).
       $tag_name = '';
       if ($featured->hasField('field_tags') && !$featured->get('field_tags')->isEmpty()) {
         $first_tag = $featured->get('field_tags')->first();
         if ($first_tag) {
           $tag_term = Term::load($first_tag->target_id);
           if ($tag_term) {
+            // Get translated term name.
             $tag_name = $tag_term->getName();
+            if ($tag_term->hasTranslation($current_language)) {
+              $translated_term = $tag_term->getTranslation($current_language);
+              $tag_name = $translated_term->getName();
+            }
           }
         }
       }
@@ -945,11 +1149,21 @@ function _news_theme_get_newsletter_articles() {
         }
       }
 
+      // Generate URL with explicit language option.
+      $language_object = $language_manager->getLanguage($current_language);
+      $featured_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $featured->id()],
+        [
+          'language' => $language_object,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['featured_article'] = [
         'title' => $featured->getTitle(),
-        'url' => $featured->toUrl()->toString(),
-        'author_name' => $author->getDisplayName(),
-        'author_initial' => mb_substr($author->getDisplayName(), 0, 1),
+        'url' => $featured_url,
+        'author_name' => $author_name,
+        'author_initial' => mb_substr($author_name, 0, 1),
         'author_avatar' => $author_avatar,
         'excerpt' => $excerpt,
         'excerpt_desktop' => $excerpt_desktop,
@@ -1079,6 +1293,10 @@ function _news_theme_get_top_news_by_category() {
   $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
   $terms = $term_storage->loadTree('tags', 0, NULL, TRUE);
 
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage()->getId();
+
   // Define color schemes for tags.
   $color_schemes = [
     ['bg' => 'bg-blue-100', 'text' => 'text-blue-800', 'hover' => 'hover:bg-blue-200'],
@@ -1097,10 +1315,18 @@ function _news_theme_get_top_news_by_category() {
       break;
     }
 
+    // Get translated term name.
+    $term_name = $term->getName();
+    if ($term->hasTranslation($current_language)) {
+      $translated_term = $term->getTranslation($current_language);
+      $term_name = $translated_term->getName();
+    }
+
     $query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
       ->condition('field_tags', $term->id())
+      ->condition('langcode', $current_language)
       ->sort('created', 'DESC')
       ->range(0, 10)
       ->accessCheck(TRUE);
@@ -1120,15 +1346,39 @@ function _news_theme_get_top_news_by_category() {
       $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
 
       if ($node) {
+        // Get translated node if available.
+        if ($node->hasTranslation($current_language)) {
+          $node = $node->getTranslation($current_language);
+        }
+
         // Assign a consistent color based on term ID.
         $color_index = $term->id() % count($color_schemes);
         $colors = $color_schemes[$color_index];
 
+        // Get URL with explicit language option to ensure proper alias generation.
+        $language_object = \Drupal::languageManager()->getLanguage($current_language);
+        $node_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+          ['node' => $node->id()],
+          [
+            'language' => $language_object,
+            'absolute' => FALSE,
+          ]
+        )->toString();
+
+        // Get term URL.
+        $term_url = \Drupal\Core\Url::fromRoute('entity.taxonomy_term.canonical',
+          ['taxonomy_term' => $term->id()],
+          [
+            'language' => $language_object,
+            'absolute' => FALSE,
+          ]
+        )->toString();
+
         $articles[] = [
           'title' => $node->getTitle(),
-          'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
-          'category_name' => $term->getName(),
-          'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+          'url' => $node_url,
+          'category_name' => $term_name,
+          'category_url' => $term_url,
           'created' => $node->getCreatedTime(),
           'category_bg' => $colors['bg'],
           'category_text' => $colors['text'],
@@ -1147,10 +1397,18 @@ function _news_theme_get_top_news_by_category() {
         break;
       }
 
+      // Get translated term name.
+      $term_name = $term->getName();
+      if ($term->hasTranslation($current_language)) {
+        $translated_term = $term->getTranslation($current_language);
+        $term_name = $translated_term->getName();
+      }
+
       $query = \Drupal::entityQuery('node')
         ->condition('type', 'article')
         ->condition('status', 1)
         ->condition('field_tags', $term->id())
+        ->condition('langcode', $current_language)
         ->sort('created', 'DESC')
         ->range(0, 20)
         ->accessCheck(TRUE);
@@ -1170,15 +1428,39 @@ function _news_theme_get_top_news_by_category() {
         $node = \Drupal::entityTypeManager()->getStorage('node')->load($nid);
 
         if ($node) {
+          // Get translated node if available.
+          if ($node->hasTranslation($current_language)) {
+            $node = $node->getTranslation($current_language);
+          }
+
           // Assign a consistent color based on term ID.
           $color_index = $term->id() % count($color_schemes);
           $colors = $color_schemes[$color_index];
 
+          // Get URL with explicit language option to ensure proper alias generation.
+          $language_object = \Drupal::languageManager()->getLanguage($current_language);
+          $node_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+            ['node' => $node->id()],
+            [
+              'language' => $language_object,
+              'absolute' => FALSE,
+            ]
+          )->toString();
+
+          // Get term URL.
+          $term_url = \Drupal\Core\Url::fromRoute('entity.taxonomy_term.canonical',
+            ['taxonomy_term' => $term->id()],
+            [
+              'language' => $language_object,
+              'absolute' => FALSE,
+            ]
+          )->toString();
+
           $articles[] = [
             'title' => $node->getTitle(),
-            'url' => \Drupal::service('path_alias.manager')->getAliasByPath('/node/' . $node->id()),
-            'category_name' => $term->getName(),
-            'category_url' => \Drupal::service('path_alias.manager')->getAliasByPath('/taxonomy/term/' . $term->id()),
+            'url' => $node_url,
+            'category_name' => $term_name,
+            'category_url' => $term_url,
             'created' => $node->getCreatedTime(),
             'category_bg' => $colors['bg'],
             'category_text' => $colors['text'],
@@ -1223,6 +1505,12 @@ function _news_theme_get_domain_options() {
  *   TRUE if language switcher should be displayed, FALSE otherwise.
  */
 function _news_theme_language_switcher_enabled() {
+  // Check if we should hide for anonymous users.
+  $hide_anonymous = theme_get_setting('language_switcher_hide_anonymous') ?? FALSE;
+  if ($hide_anonymous && \Drupal::currentUser()->isAnonymous()) {
+    return FALSE;
+  }
+
   // Check if domain module is enabled.
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $enabled_domains = theme_get_setting('language_switcher_enable_domains') ?: [];
@@ -1281,12 +1569,27 @@ function _news_theme_add_language_switcher(&$variables) {
     'name' => $current_language->getName(),
   ];
 
+  // Check if we're on a node page and filter to available translations.
+  $route_match = \Drupal::routeMatch();
+  $node = $route_match->getParameter('node');
+  $available_langcodes = NULL;
+
+  if ($node && $node instanceof \Drupal\node\NodeInterface) {
+    // Get all available translations for this node.
+    $available_langcodes = array_keys($node->getTranslationLanguages());
+  }
+
   // Only add language switcher if there are multiple languages.
   if (count($languages) > 1) {
-    $route_name = \Drupal::routeMatch()->getRouteName();
-    $route_parameters = \Drupal::routeMatch()->getRawParameters()->all();
+    $route_name = $route_match->getRouteName();
+    $route_parameters = $route_match->getRawParameters()->all();
 
     foreach ($languages as $langcode => $language) {
+      // If on a node page, only show languages with translations.
+      if ($available_langcodes !== NULL && !in_array($langcode, $available_langcodes)) {
+        continue;
+      }
+
       // Get the URL for switching to this language.
       try {
         $url = Url::fromRoute($route_name, $route_parameters, [
@@ -1311,4 +1614,44 @@ function _news_theme_add_language_switcher(&$variables) {
 
   // Add cache contexts for language.
   $variables['#cache']['contexts'][] = 'languages:language_interface';
+}
+
+/**
+ * Implements hook_views_query_alter().
+ *
+ * Filter node views by current language.
+ */
+function news_theme_views_query_alter(\Drupal\views\ViewExecutable $view, \Drupal\views\Plugin\views\query\QueryPluginBase $query) {
+  // Only apply to SQL-based queries.
+  if (!($query instanceof \Drupal\views\Plugin\views\query\Sql)) {
+    return;
+  }
+
+  // Only apply to node-based views.
+  if ($view->storage->get('base_table') !== 'node_field_data') {
+    return;
+  }
+
+  // Get current language.
+  $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+
+  // Add a WHERE condition directly to the query to filter by current language.
+  // Use group 0 (default group) with AND operator.
+  foreach ($query->where as &$condition_group) {
+    // Check if langcode filter already exists in this group
+    $has_langcode = FALSE;
+    foreach ($condition_group['conditions'] as $condition) {
+      if (is_array($condition) && isset($condition['field']) &&
+          (strpos($condition['field'], '.langcode') !== FALSE || $condition['field'] === 'langcode')) {
+        $has_langcode = TRUE;
+        break;
+      }
+    }
+    if ($has_langcode) {
+      return; // Already filtered, don't add duplicate
+    }
+  }
+
+  // Add the language filter to the main WHERE group (0).
+  $query->addWhere(0, 'node_field_data.langcode', $current_language, '=');
 }

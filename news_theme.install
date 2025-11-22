@@ -32,3 +32,24 @@ function news_theme_uninstall() {
     ->save(TRUE);
   */
 }
+
+/**
+ * Initialize translatable theme settings configuration.
+ */
+function news_theme_update_8001() {
+  // Get the theme settings.
+  $config = \Drupal::configFactory()->getEditable('news_theme.settings');
+
+  // Set default values for translatable fields if they don't exist.
+  if ($config->get('footer_description') === NULL) {
+    $config->set('footer_description', 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.');
+  }
+
+  if ($config->get('newsletter_header') === NULL) {
+    $config->set('newsletter_header', 'WELCOME TO BULETIN');
+  }
+
+  $config->save(TRUE);
+
+  return t('Initialized translatable theme settings. You can now translate footer_description and newsletter_header at Configuration > Regional and language > Configuration translation.');
+}
