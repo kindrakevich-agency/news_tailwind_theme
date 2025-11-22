@@ -689,32 +689,44 @@ function _news_theme_get_main_menu_items() {
 
   $menu_items = [];
   foreach ($tree as $element) {
+    $plugin_id = $element->link->getPluginId();
+    $menu_link_entity = NULL;
+
+    // Load menu link content entity if this is a content menu link.
+    if (strpos($plugin_id, 'menu_link_content:') === 0) {
+      $uuid = str_replace('menu_link_content:', '', $plugin_id);
+      $entities = \Drupal::entityTypeManager()
+        ->getStorage('menu_link_content')
+        ->loadByProperties(['uuid' => $uuid]);
+
+      if ($entities) {
+        $menu_link_entity = reset($entities);
+      }
+    }
+
+    // Language filtering: Skip menu items not translated to current language.
+    if ($menu_link_entity) {
+      // Check if the menu link has a translation for the current language.
+      if (!$menu_link_entity->hasTranslation($current_language->getId())) {
+        // Skip this menu item if it's not available in the current language.
+        continue;
+      }
+
+      // Get the translated version of the menu link.
+      $menu_link_entity = $menu_link_entity->getTranslation($current_language->getId());
+    }
+
     // Apply domain filtering if domain module is enabled.
-    if ($active_domain_id && !empty($domain_restrictions)) {
-      $plugin_id = $element->link->getPluginId();
+    if ($active_domain_id && !empty($domain_restrictions) && $menu_link_entity) {
+      $menu_link_id = $menu_link_entity->id();
 
-      // Check if this is a menu_link_content item.
-      if (strpos($plugin_id, 'menu_link_content:') === 0) {
-        $uuid = str_replace('menu_link_content:', '', $plugin_id);
+      // Check if this menu link has domain restrictions.
+      if (isset($domain_restrictions[$menu_link_id])) {
+        $allowed_domains = $domain_restrictions[$menu_link_id];
 
-        // Load the menu link content entity to get the numeric ID.
-        $entities = \Drupal::entityTypeManager()
-          ->getStorage('menu_link_content')
-          ->loadByProperties(['uuid' => $uuid]);
-
-        if ($entities) {
-          $entity = reset($entities);
-          $menu_link_id = $entity->id();
-
-          // Check if this menu link has domain restrictions.
-          if (isset($domain_restrictions[$menu_link_id])) {
-            $allowed_domains = $domain_restrictions[$menu_link_id];
-
-            // If current domain is not in the allowed list, skip this link.
-            if (!in_array($active_domain_id, $allowed_domains)) {
-              continue;
-            }
-          }
+        // If current domain is not in the allowed list, skip this link.
+        if (!in_array($active_domain_id, $allowed_domains)) {
+          continue;
         }
       }
     }
@@ -735,8 +747,11 @@ function _news_theme_get_main_menu_items() {
       $is_active = TRUE;
     }
 
+    // Use translated title if available, otherwise use default title.
+    $title = $menu_link_entity ? $menu_link_entity->getTitle() : $element->link->getTitle();
+
     $menu_items[] = [
-      'title' => $element->link->getTitle(),
+      'title' => $title,
       'url' => $url_object,
       'is_active' => $is_active,
     ];
