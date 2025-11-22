@@ -206,11 +206,19 @@ function news_theme_preprocess_page(&$variables) {
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 
+  // Add cache contexts for proper menu rendering.
+  // Ensure menu is re-rendered when switching languages or domains.
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
+  $variables['#cache']['contexts'][] = 'languages:language_content';
+
   // Add cache context for domain if domain module is enabled.
   // This ensures the menu is re-rendered when switching between domains.
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $variables['#cache']['contexts'][] = 'url.site';
   }
+
+  // Add cache tags for menu items.
+  $variables['#cache']['tags'][] = 'config:system.menu.main';
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
@@ -271,11 +279,19 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 
+  // Add cache contexts for proper menu rendering.
+  // Ensure menu is re-rendered when switching languages or domains.
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
+  $variables['#cache']['contexts'][] = 'languages:language_content';
+
   // Add cache context for domain if domain module is enabled.
   // This ensures the menu is re-rendered when switching between domains.
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $variables['#cache']['contexts'][] = 'url.site';
   }
+
+  // Add cache tags for menu items.
+  $variables['#cache']['tags'][] = 'config:system.menu.main';
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
@@ -583,28 +599,33 @@ function _news_theme_load_tags() {
 
   // Count nodes for each term and prepare array.
   foreach ($terms as $term) {
-    // Get translated term if available.
-    if ($term->hasTranslation($current_language)) {
-      $translated_term = $term->getTranslation($current_language);
-      $term_name = $translated_term->getName();
-    }
-    else {
-      $term_name = $term->getName();
+    // Skip terms without translation in current language.
+    if (!$term->hasTranslation($current_language)) {
+      continue;
     }
 
-    // Count published article nodes tagged with this term.
+    // Get translated term.
+    $translated_term = $term->getTranslation($current_language);
+    $term_name = $translated_term->getName();
+
+    // Count published article nodes tagged with this term in current language.
+    // Only count articles that are available in the current language.
     $query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
       ->condition('field_tags', $term->id())
+      ->condition('langcode', $current_language)
       ->accessCheck(TRUE);
     $count = $query->count()->execute();
 
-    $tags[] = [
-      'id' => $term->id(),
-      'name' => $term_name,
-      'count' => $count,
-    ];
+    // Only add tags that have articles in the current language.
+    if ($count > 0) {
+      $tags[] = [
+        'id' => $term->id(),
+        'name' => $term_name,
+        'count' => $count,
+      ];
+    }
   }
 
   // Sort by count descending.
@@ -621,6 +642,11 @@ function _news_theme_load_tags() {
 function _news_theme_get_main_menu_items() {
   $menu_tree = \Drupal::menuTree();
   $menu_name = 'main';
+
+  // Get current language for proper menu translation.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+
   $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
   $parameters->setMaxDepth(1);
   $tree = $menu_tree->load($menu_name, $parameters);
@@ -659,51 +685,78 @@ function _news_theme_get_main_menu_items() {
     }
   }
 
+  // Get current path for active menu detection.
   $current_path = \Drupal::service('path.current')->getPath();
-  $current_url = Url::fromUserInput($current_path)->toString();
+  // Generate language-aware URL for comparison.
+  $current_url = Url::fromUserInput($current_path, [
+    'language' => $current_language,
+  ])->toString();
 
   $menu_items = [];
   foreach ($tree as $element) {
+    $plugin_id = $element->link->getPluginId();
+    $menu_link_entity = NULL;
+
+    // Load menu link content entity if this is a content menu link.
+    if (strpos($plugin_id, 'menu_link_content:') === 0) {
+      $uuid = str_replace('menu_link_content:', '', $plugin_id);
+      $entities = \Drupal::entityTypeManager()
+        ->getStorage('menu_link_content')
+        ->loadByProperties(['uuid' => $uuid]);
+
+      if ($entities) {
+        $menu_link_entity = reset($entities);
+      }
+    }
+
+    // Language filtering: Skip menu items not translated to current language.
+    if ($menu_link_entity) {
+      // Check if the menu link has a translation for the current language.
+      if (!$menu_link_entity->hasTranslation($current_language->getId())) {
+        // Skip this menu item if it's not available in the current language.
+        continue;
+      }
+
+      // Get the translated version of the menu link.
+      $menu_link_entity = $menu_link_entity->getTranslation($current_language->getId());
+    }
+
     // Apply domain filtering if domain module is enabled.
-    if ($active_domain_id && !empty($domain_restrictions)) {
-      $plugin_id = $element->link->getPluginId();
+    if ($active_domain_id && !empty($domain_restrictions) && $menu_link_entity) {
+      $menu_link_id = $menu_link_entity->id();
 
-      // Check if this is a menu_link_content item.
-      if (strpos($plugin_id, 'menu_link_content:') === 0) {
-        $uuid = str_replace('menu_link_content:', '', $plugin_id);
+      // Check if this menu link has domain restrictions.
+      if (isset($domain_restrictions[$menu_link_id])) {
+        $allowed_domains = $domain_restrictions[$menu_link_id];
 
-        // Load the menu link content entity to get the numeric ID.
-        $entities = \Drupal::entityTypeManager()
-          ->getStorage('menu_link_content')
-          ->loadByProperties(['uuid' => $uuid]);
-
-        if ($entities) {
-          $entity = reset($entities);
-          $menu_link_id = $entity->id();
-
-          // Check if this menu link has domain restrictions.
-          if (isset($domain_restrictions[$menu_link_id])) {
-            $allowed_domains = $domain_restrictions[$menu_link_id];
-
-            // If current domain is not in the allowed list, skip this link.
-            if (!in_array($active_domain_id, $allowed_domains)) {
-              continue;
-            }
-          }
+        // If current domain is not in the allowed list, skip this link.
+        if (!in_array($active_domain_id, $allowed_domains)) {
+          continue;
         }
       }
     }
 
+    // Get URL object and ensure it's language-aware.
     $url_object = $element->link->getUrlObject();
+
+    // Generate language-aware URL for menu item.
+    if (!$url_object->isExternal()) {
+      $url_object->setOption('language', $current_language);
+    }
+
     $is_active = FALSE;
 
-    // Check if this menu item is active.
-    if ($url_object->toString() === $current_url) {
+    // Check if this menu item is active by comparing language-aware URLs.
+    $menu_url = $url_object->toString();
+    if ($menu_url === $current_url) {
       $is_active = TRUE;
     }
 
+    // Use translated title if available, otherwise use default title.
+    $title = $menu_link_entity ? $menu_link_entity->getTitle() : $element->link->getTitle();
+
     $menu_items[] = [
-      'title' => $element->link->getTitle(),
+      'title' => $title,
       'url' => $url_object,
       'is_active' => $is_active,
     ];
@@ -1584,6 +1637,9 @@ function _news_theme_add_language_switcher(&$variables) {
     $route_name = $route_match->getRouteName();
     $route_parameters = $route_match->getRawParameters()->all();
 
+    // Check if we're on the front page.
+    $is_front = \Drupal::service('path.matcher')->isFrontPage();
+
     foreach ($languages as $langcode => $language) {
       // If on a node page, only show languages with translations.
       if ($available_langcodes !== NULL && !in_array($langcode, $available_langcodes)) {
@@ -1592,9 +1648,17 @@ function _news_theme_add_language_switcher(&$variables) {
 
       // Get the URL for switching to this language.
       try {
-        $url = Url::fromRoute($route_name, $route_parameters, [
-          'language' => $language,
-        ])->toString();
+        // If on front page, use <front> route to get clean URLs like /en, /es
+        if ($is_front) {
+          $url = Url::fromRoute('<front>', [], [
+            'language' => $language,
+          ])->toString();
+        }
+        else {
+          $url = Url::fromRoute($route_name, $route_parameters, [
+            'language' => $language,
+          ])->toString();
+        }
       }
       catch (\Exception $e) {
         // Fallback to homepage if route doesn't exist.
