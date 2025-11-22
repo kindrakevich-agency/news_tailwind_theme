@@ -599,28 +599,33 @@ function _news_theme_load_tags() {
 
   // Count nodes for each term and prepare array.
   foreach ($terms as $term) {
-    // Get translated term if available.
-    if ($term->hasTranslation($current_language)) {
-      $translated_term = $term->getTranslation($current_language);
-      $term_name = $translated_term->getName();
-    }
-    else {
-      $term_name = $term->getName();
+    // Skip terms without translation in current language.
+    if (!$term->hasTranslation($current_language)) {
+      continue;
     }
 
-    // Count published article nodes tagged with this term.
+    // Get translated term.
+    $translated_term = $term->getTranslation($current_language);
+    $term_name = $translated_term->getName();
+
+    // Count published article nodes tagged with this term in current language.
+    // Only count articles that are available in the current language.
     $query = \Drupal::entityQuery('node')
       ->condition('type', 'article')
       ->condition('status', 1)
       ->condition('field_tags', $term->id())
+      ->condition('langcode', $current_language)
       ->accessCheck(TRUE);
     $count = $query->count()->execute();
 
-    $tags[] = [
-      'id' => $term->id(),
-      'name' => $term_name,
-      'count' => $count,
-    ];
+    // Only add tags that have articles in the current language.
+    if ($count > 0) {
+      $tags[] = [
+        'id' => $term->id(),
+        'name' => $term_name,
+        'count' => $count,
+      ];
+    }
   }
 
   // Sort by count descending.
