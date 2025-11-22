@@ -269,6 +269,25 @@ function news_theme_preprocess_node(&$variables) {
   /** @var \Drupal\node\NodeInterface $node */
   $node = $variables['node'];
 
+  // Generate language-aware URL for the node.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+
+  // Get the translated node if available.
+  $translated_node = $node;
+  if ($node->hasTranslation($current_language->getId())) {
+    $translated_node = $node->getTranslation($current_language->getId());
+  }
+
+  // Generate URL with explicit language option.
+  $variables['url'] = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+    ['node' => $translated_node->id()],
+    [
+      'language' => $current_language,
+      'absolute' => FALSE,
+    ]
+  )->toString();
+
   // Add author name and avatar.
   $author = $node->getOwner();
 
@@ -672,6 +691,10 @@ function _news_theme_get_prev_next_articles($current_node) {
     return $result;
   }
 
+  // Get current language.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+
   $current_created = $current_node->getCreatedTime();
   $current_nid = $current_node->id();
 
@@ -691,8 +714,22 @@ function _news_theme_get_prev_next_articles($current_node) {
     $prev_nid = reset($nids_prev);
     $prev_node = Node::load($prev_nid);
     if ($prev_node) {
+      // Get translated node if available.
+      if ($prev_node->hasTranslation($current_language->getId())) {
+        $prev_node = $prev_node->getTranslation($current_language->getId());
+      }
+
+      // Generate URL with explicit language option.
+      $prev_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $prev_node->id()],
+        [
+          'language' => $current_language,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['prev'] = [
-        'url' => $prev_node->toUrl()->toString(),
+        'url' => $prev_url,
         'title' => $prev_node->getTitle(),
       ];
     }
@@ -714,8 +751,22 @@ function _news_theme_get_prev_next_articles($current_node) {
     $next_nid = reset($nids_next);
     $next_node = Node::load($next_nid);
     if ($next_node) {
+      // Get translated node if available.
+      if ($next_node->hasTranslation($current_language->getId())) {
+        $next_node = $next_node->getTranslation($current_language->getId());
+      }
+
+      // Generate URL with explicit language option.
+      $next_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $next_node->id()],
+        [
+          'language' => $current_language,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['next'] = [
-        'url' => $next_node->toUrl()->toString(),
+        'url' => $next_url,
         'title' => $next_node->getTitle(),
       ];
     }
@@ -944,15 +995,37 @@ function _news_theme_get_newsletter_articles() {
     // First article (latest) - for the tagline.
     if (isset($nodes[0])) {
       $latest = $nodes[0];
+
+      // Get translated node if available.
+      if ($latest->hasTranslation($current_language)) {
+        $latest = $latest->getTranslation($current_language);
+      }
+
+      // Generate URL with explicit language option.
+      $language_object = $language_manager->getLanguage($current_language);
+      $latest_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $latest->id()],
+        [
+          'language' => $language_object,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['latest_article'] = [
         'title' => $latest->getTitle(),
-        'url' => $latest->toUrl()->toString(),
+        'url' => $latest_url,
       ];
     }
 
     // Second article - for the featured card.
     if (isset($nodes[1])) {
       $featured = $nodes[1];
+
+      // Get translated node if available.
+      if ($featured->hasTranslation($current_language)) {
+        $featured = $featured->getTranslation($current_language);
+      }
+
       $author = $featured->getOwner();
 
       // Transliterate author name only if NOT in default language.
@@ -1030,9 +1103,19 @@ function _news_theme_get_newsletter_articles() {
         }
       }
 
+      // Generate URL with explicit language option.
+      $language_object = $language_manager->getLanguage($current_language);
+      $featured_url = \Drupal\Core\Url::fromRoute('entity.node.canonical',
+        ['node' => $featured->id()],
+        [
+          'language' => $language_object,
+          'absolute' => FALSE,
+        ]
+      )->toString();
+
       $result['featured_article'] = [
         'title' => $featured->getTitle(),
-        'url' => $featured->toUrl()->toString(),
+        'url' => $featured_url,
         'author_name' => $author_name,
         'author_initial' => mb_substr($author_name, 0, 1),
         'author_avatar' => $author_avatar,
