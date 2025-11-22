@@ -500,6 +500,21 @@ function news_theme_preprocess_node(&$variables) {
 function news_theme_preprocess_field(&$variables) {
   $element = $variables['element'];
 
+  // Remove link from image field in teaser view mode.
+  // The teaser template already wraps the image with the correct language-aware link.
+  if ($element['#field_name'] == 'field_image' && $element['#view_mode'] == 'teaser') {
+    foreach ($variables['items'] as $delta => $item) {
+      // Remove the url from the image formatter if it exists.
+      if (isset($variables['items'][$delta]['content']['#url'])) {
+        unset($variables['items'][$delta]['content']['#url']);
+      }
+      // Also remove any link type settings.
+      if (isset($variables['items'][$delta]['content']['#image_style'])) {
+        $variables['items'][$delta]['content']['#type'] = 'image';
+      }
+    }
+  }
+
   // Format tags field as links.
   if ($element['#field_name'] == 'field_tags') {
     // Get current language.
