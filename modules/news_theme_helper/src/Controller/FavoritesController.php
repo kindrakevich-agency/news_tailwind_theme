@@ -29,7 +29,8 @@ class FavoritesController extends ControllerBase {
 
     // Load main menu items using the shared theme function.
     // This ensures consistency with domain filtering and language support.
-    $main_menu_items = _news_theme_get_main_menu_items();
+    // Use leading backslash to call global namespace function from namespaced class.
+    $main_menu_items = \_news_theme_get_main_menu_items();
 
     $build = [
       '#theme' => 'page__favorites',
