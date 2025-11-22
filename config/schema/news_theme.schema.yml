@@ -1,48 +1,44 @@
-name: Settings
-type: theme_settings
-description: 'Settings for the News theme'
-
-footer_site_name:
-  type: textfield
-  label: 'Footer site name'
-  default_value: 'Polissya.today'
-
-footer_description:
-  type: textarea
-  label: 'Footer description'
-  default_value: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.'
-
-footer_email:
-  type: textfield
-  label: 'Footer email address'
-  default_value: 'contact@polissya.today'
-
-footer_facebook:
-  type: url
-  label: 'Facebook URL'
-  default_value: ''
-
-footer_twitter:
-  type: url
-  label: 'Twitter URL'
-  default_value: ''
-
-footer_instagram:
-  type: url
-  label: 'Instagram URL'
-  default_value: ''
-
-footer_youtube:
-  type: url
-  label: 'YouTube URL'
-  default_value: ''
-
-footer_github:
-  type: url
-  label: 'GitHub URL'
-  default_value: ''
-
-footer_medium:
-  type: url
-  label: 'Medium URL'
-  default_value: ''
+news_theme.settings:
+  type: theme_settings
+  label: 'News Theme settings'
+  mapping:
+    footer_site_name:
+      type: text
+      label: 'Footer site name'
+    footer_description:
+      type: text
+      label: 'Footer description'
+      translatable: true
+    footer_email:
+      type: text
+      label: 'Footer email address'
+    footer_facebook:
+      type: text
+      label: 'Facebook URL'
+    footer_twitter:
+      type: text
+      label: 'Twitter URL'
+    footer_instagram:
+      type: text
+      label: 'Instagram URL'
+    footer_youtube:
+      type: text
+      label: 'YouTube URL'
+    footer_github:
+      type: text
+      label: 'GitHub URL'
+    footer_medium:
+      type: text
+      label: 'Medium URL'
+    newsletter_header:
+      type: text
+      label: 'Newsletter header'
+      translatable: true
+    language_switcher_domains:
+      type: sequence
+      label: 'Language switcher domains'
+      sequence:
+        type: text
+    language_switcher_hide_anonymous:
+      type: boolean
+      label: 'Hide language switcher for anonymous users'

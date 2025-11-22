@@ -185,9 +185,16 @@ function news_theme_preprocess_page(&$variables) {
     }
   }
 
-  // Load footer settings.
+  // Load footer settings with language support.
+  // Get config with language override for translatable fields.
+  $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $config = \Drupal::config('news_theme.settings');
+
+  // Get language-specific config override if available.
+  $language_config = \Drupal::languageManager()->getLanguageConfigOverride($current_language, 'news_theme.settings');
+
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
-  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_description'] = $language_config->get('footer_description') ?: $config->get('footer_description') ?: theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
   $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
   $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
   $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
@@ -213,7 +220,12 @@ function news_theme_preprocess_page(&$variables) {
 
   // Load newsletter settings and featured articles for frontpage.
   if (\Drupal::service('path.matcher')->isFrontPage()) {
-    $variables['newsletter_header'] = theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
+    // Get language-specific newsletter header if available.
+    $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    $config = \Drupal::config('news_theme.settings');
+    $language_config = \Drupal::languageManager()->getLanguageConfigOverride($current_language, 'news_theme.settings');
+
+    $variables['newsletter_header'] = $language_config->get('newsletter_header') ?: $config->get('newsletter_header') ?: theme_get_setting('newsletter_header') ?: 'WELCOME TO BULETIN';
     $variables['newsletter_data'] = _news_theme_get_newsletter_articles();
     $variables['exchange_rates'] = _news_theme_get_exchange_rates();
     $variables['top_news_by_category'] = _news_theme_get_top_news_by_category();
@@ -238,9 +250,16 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
   $request = \Drupal::request();
   $variables['search_query'] = $request->query->get('keys') ?: '';
 
-  // Load footer settings.
+  // Load footer settings with language support.
+  // Get config with language override for translatable fields.
+  $current_language = \Drupal::languageManager()->getCurrentLanguage()->getId();
+  $config = \Drupal::config('news_theme.settings');
+
+  // Get language-specific config override if available.
+  $language_config = \Drupal::languageManager()->getLanguageConfigOverride($current_language, 'news_theme.settings');
+
   $variables['footer_site_name'] = theme_get_setting('footer_site_name') ?: 'Polissya.today';
-  $variables['footer_description'] = theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
+  $variables['footer_description'] = $language_config->get('footer_description') ?: $config->get('footer_description') ?: theme_get_setting('footer_description') ?: 'Your trusted source for news and information from the Polissya region. Stay informed with the latest updates and stories.';
   $variables['footer_email'] = theme_get_setting('footer_email') ?: 'contact@polissya.today';
   $variables['footer_facebook'] = theme_get_setting('footer_facebook') ?: '';
   $variables['footer_twitter'] = theme_get_setting('footer_twitter') ?: '';
@@ -287,6 +306,13 @@ function news_theme_preprocess_node(&$variables) {
       'absolute' => FALSE,
     ]
   )->toString();
+
+  // Add language cache context to ensure URLs are cached per language.
+  if (!isset($variables['#cache']['contexts'])) {
+    $variables['#cache']['contexts'] = [];
+  }
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
+  $variables['#cache']['contexts'][] = 'languages:language_content';
 
   // Add author name and avatar.
   $author = $node->getOwner();
