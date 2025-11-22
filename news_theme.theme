@@ -206,11 +206,19 @@ function news_theme_preprocess_page(&$variables) {
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 
+  // Add cache contexts for proper menu rendering.
+  // Ensure menu is re-rendered when switching languages or domains.
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
+  $variables['#cache']['contexts'][] = 'languages:language_content';
+
   // Add cache context for domain if domain module is enabled.
   // This ensures the menu is re-rendered when switching between domains.
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $variables['#cache']['contexts'][] = 'url.site';
   }
+
+  // Add cache tags for menu items.
+  $variables['#cache']['tags'][] = 'config:system.menu.main';
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
@@ -271,11 +279,19 @@ function news_theme_preprocess_taxonomy_term(&$variables) {
   // Load main menu items for filter buttons.
   $variables['main_menu_items'] = _news_theme_get_main_menu_items();
 
+  // Add cache contexts for proper menu rendering.
+  // Ensure menu is re-rendered when switching languages or domains.
+  $variables['#cache']['contexts'][] = 'languages:language_interface';
+  $variables['#cache']['contexts'][] = 'languages:language_content';
+
   // Add cache context for domain if domain module is enabled.
   // This ensures the menu is re-rendered when switching between domains.
   if (\Drupal::moduleHandler()->moduleExists('domain')) {
     $variables['#cache']['contexts'][] = 'url.site';
   }
+
+  // Add cache tags for menu items.
+  $variables['#cache']['tags'][] = 'config:system.menu.main';
 
   // Load header settings.
   $variables['header_site_name'] = theme_get_setting('header_site_name') ?: \Drupal::config('system.site')->get('name') ?: 'Polissya.today';
@@ -621,6 +637,11 @@ function _news_theme_load_tags() {
 function _news_theme_get_main_menu_items() {
   $menu_tree = \Drupal::menuTree();
   $menu_name = 'main';
+
+  // Get current language for proper menu translation.
+  $language_manager = \Drupal::languageManager();
+  $current_language = $language_manager->getCurrentLanguage();
+
   $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
   $parameters->setMaxDepth(1);
   $tree = $menu_tree->load($menu_name, $parameters);
@@ -659,8 +680,12 @@ function _news_theme_get_main_menu_items() {
     }
   }
 
+  // Get current path for active menu detection.
   $current_path = \Drupal::service('path.current')->getPath();
-  $current_url = Url::fromUserInput($current_path)->toString();
+  // Generate language-aware URL for comparison.
+  $current_url = Url::fromUserInput($current_path, [
+    'language' => $current_language,
+  ])->toString();
 
   $menu_items = [];
   foreach ($tree as $element) {
@@ -694,11 +719,19 @@ function _news_theme_get_main_menu_items() {
       }
     }
 
+    // Get URL object and ensure it's language-aware.
     $url_object = $element->link->getUrlObject();
+
+    // Generate language-aware URL for menu item.
+    if (!$url_object->isExternal()) {
+      $url_object->setOption('language', $current_language);
+    }
+
     $is_active = FALSE;
 
-    // Check if this menu item is active.
-    if ($url_object->toString() === $current_url) {
+    // Check if this menu item is active by comparing language-aware URLs.
+    $menu_url = $url_object->toString();
+    if ($menu_url === $current_url) {
       $is_active = TRUE;
     }
 

@@ -27,25 +27,9 @@ class FavoritesController extends ControllerBase {
       ];
     }
 
-    // Load main menu items
-    $menu_tree = \Drupal::menuTree();
-    $menu_name = 'main';
-    $parameters = $menu_tree->getCurrentRouteMenuTreeParameters($menu_name);
-    $parameters->setMaxDepth(1);
-    $tree = $menu_tree->load($menu_name, $parameters);
-    $manipulators = [
-      ['callable' => 'menu.default_tree_manipulators:checkAccess'],
-      ['callable' => 'menu.default_tree_manipulators:generateIndexAndSort'],
-    ];
-    $tree = $menu_tree->transform($tree, $manipulators);
-
-    $main_menu_items = [];
-    foreach ($tree as $element) {
-      $main_menu_items[] = [
-        'title' => $element->link->getTitle(),
-        'url' => $element->link->getUrlObject(),
-      ];
-    }
+    // Load main menu items using the shared theme function.
+    // This ensures consistency with domain filtering and language support.
+    $main_menu_items = _news_theme_get_main_menu_items();
 
     $build = [
       '#theme' => 'page__favorites',
@@ -53,6 +37,10 @@ class FavoritesController extends ControllerBase {
       '#main_menu_items' => $main_menu_items,
       '#cache' => [
         'max-age' => 0, // Don't cache this page
+        'contexts' => [
+          'languages:language_interface',
+          'languages:language_content',
+        ],
       ],
     ];
 
