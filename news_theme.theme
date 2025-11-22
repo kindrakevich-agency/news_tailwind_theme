@@ -977,29 +977,39 @@ function _news_theme_get_newsletter_articles() {
   $language_manager = \Drupal::languageManager();
   $current_language = $language_manager->getCurrentLanguage()->getId();
 
-  // Query for the latest 2 published articles in current language.
+  // Query for latest published articles (get more than 2 to filter for translations).
+  // Don't filter by langcode - we want articles that HAVE translations, not just created in this language.
   $query = \Drupal::entityQuery('node')
     ->condition('type', 'article')
     ->condition('status', 1)
-    ->condition('langcode', $current_language)
     ->sort('created', 'DESC')
-    ->range(0, 2)
+    ->range(0, 20)
     ->accessCheck(TRUE);
 
   $nids = $query->execute();
 
-  if (count($nids) >= 2) {
+  // Filter to find articles with translations in current language.
+  $translated_nodes = [];
+  if (!empty($nids)) {
     $nodes = Node::loadMultiple($nids);
-    $nodes = array_values($nodes);
+    foreach ($nodes as $node) {
+      // Check if node has translation in current language.
+      if ($node->hasTranslation($current_language)) {
+        $translated_nodes[] = $node->getTranslation($current_language);
+        // Stop when we have 2 articles.
+        if (count($translated_nodes) >= 2) {
+          break;
+        }
+      }
+    }
+  }
+
+  if (count($translated_nodes) >= 2) {
+    $nodes = $translated_nodes;
 
     // First article (latest) - for the tagline.
     if (isset($nodes[0])) {
       $latest = $nodes[0];
-
-      // Get translated node if available.
-      if ($latest->hasTranslation($current_language)) {
-        $latest = $latest->getTranslation($current_language);
-      }
 
       // Generate URL with explicit language option.
       $language_object = $language_manager->getLanguage($current_language);
@@ -1020,11 +1030,6 @@ function _news_theme_get_newsletter_articles() {
     // Second article - for the featured card.
     if (isset($nodes[1])) {
       $featured = $nodes[1];
-
-      // Get translated node if available.
-      if ($featured->hasTranslation($current_language)) {
-        $featured = $featured->getTranslation($current_language);
-      }
 
       $author = $featured->getOwner();
 
