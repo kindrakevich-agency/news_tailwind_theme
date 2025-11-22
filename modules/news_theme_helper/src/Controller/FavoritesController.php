@@ -64,14 +64,29 @@ class FavoritesController extends ControllerBase {
       return new JsonResponse(['articles' => []]);
     }
 
+    // Get current language for loading translated nodes.
+    $language_manager = \Drupal::languageManager();
+    $current_language = $language_manager->getCurrentLanguage();
+
     $articles = [];
     $nodes = Node::loadMultiple($nids);
 
     foreach ($nodes as $node) {
       if ($node->bundle() === 'article' && $node->access('view')) {
-        // Render the node in teaser view mode
+        // Get translated version of the node if available.
+        $translated_node = $node;
+        if ($node->hasTranslation($current_language->getId())) {
+          $translated_node = $node->getTranslation($current_language->getId());
+        }
+
+        // Render the translated node in teaser view mode.
         $view_builder = \Drupal::entityTypeManager()->getViewBuilder('node');
-        $render_array = $view_builder->view($node, 'teaser');
+        $render_array = $view_builder->view($translated_node, 'teaser');
+
+        // Add language cache context to ensure proper caching.
+        $render_array['#cache']['contexts'][] = 'languages:language_interface';
+        $render_array['#cache']['contexts'][] = 'languages:language_content';
+
         $articles[] = \Drupal::service('renderer')->renderRoot($render_array);
       }
     }

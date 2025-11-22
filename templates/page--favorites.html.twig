@@ -88,8 +88,8 @@
             loading.classList.add('hidden');
             empty.classList.remove('hidden');
         } else {
-            // Load articles via AJAX
-            fetch('{{ base_path }}favorites/api?nids=' + favorites.join(','))
+            // Load articles via AJAX with language-aware URL
+            fetch('{{ path('news_theme_helper.favorites_api') }}?nids=' + favorites.join(','))
                 .then(response => response.json())
                 .then(data => {
                     loading.classList.add('hidden');
